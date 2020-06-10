@@ -1,0 +1,56 @@
+run_type: 'magnetloss'
+run_id: 'magnet_mnist_2_4_5'
+seed: 7
+
+model:
+  type: 'lenet'
+  id: '01'
+  use_pretrained: False
+
+  emb_size: 3
+
+
+dataset:
+  name: 'mnist'
+  id: '00'
+
+
+train:
+  sampler: 'magnet'
+  loss: 'magnet'
+
+  checkpoint_every: 10  # this many epochs
+
+  epochs: 100
+  learning_rate: 0.001
+
+  episodes: 10  # per epoch
+  k: 2
+  m: 4
+  d: 5
+
+
+val:
+  every: 1  # run validation every x epochs
+
+  sampler: 'magnet'
+  loss: 'magnet'
+
+  L: 128
+  style: 'magnet'
+
+
+test:  # will only do one epoch
+  split: 'test'
+
+  resume_from: 'B'
+
+  sampler: 'magnet'
+  loss: 'magnet'
+
+
+
+vis:
+  every: 1  # update tensorboard every x steps (episodes)
+  plot_embed_every: 10  # update tensorboard projector every x steps (episodes) (Train and Val)
+  test_plot_embed_every: 10  # update tensorboard projector every x steps (episodes) (Test)

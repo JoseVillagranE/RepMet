@@ -1,0 +1,63 @@
+run_type: 'detection'
+run_id: 'FRCNN_standard_res101_voc'
+seed: 7
+
+model:
+  type: 'fasterRCNN'
+  id: '01'  # frozen
+  emb_size: 21  # num_classes
+
+  backbone:
+    type: 'resnet'
+    n_layers: 101
+
+  max_n_gt_boxes: 20
+
+dataset:
+  name: 'voc'
+  id: '01'
+
+train:
+  sampler: 'detection'
+  loss: 'detection'
+
+  batch_size: 1
+
+  checkpoint_every: 10  # this many epochs
+
+  epochs: 20
+  learning_rate: 0.001
+
+  use_flipped: True
+  use_difficult: False
+
+  lr_scheduler_gamma: 0.1 # 0.5
+  lr_scheduler_step: 5 # 20
+
+  bbox_normalize_targets_precomputed: True
+  bg_thresh_low: 0.0
+  weight_decay: 0.0001
+  double_bias: False
+
+  rpn:
+    positive_overlap: 0.7
+    batch_size: 256
+
+val:
+  every: 1 #0  # run validation every x epochs
+
+  sampler: 'detection'
+  loss: 'detection'
+
+
+test:  # will only do one epoch
+  split: 'test'
+
+  resume_from: 'B'
+
+  sampler: 'detection'
+  loss: 'detection'
+
+
+vis:
+  every: 1000  # update tensorboard every x steps (episodes)

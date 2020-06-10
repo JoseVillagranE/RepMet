@@ -1,0 +1,55 @@
+run_type: 'magnetloss'
+run_id: 'magnet_flowers_1_12_4'
+seed: 7
+
+model:
+  type: 'resnet'
+  id: '02'
+  use_pretrained: True
+
+  emb_size: 64
+
+
+dataset:
+  name: 'flowers'
+  id: '00'
+
+
+train:
+  sampler: 'magnet'
+  loss: 'magnet'
+
+  checkpoint_every: 50  # this many epochs
+
+  epochs: 1000
+  learning_rate: 0.001
+
+  episodes: 10  # per epoch
+  k: 1
+  m: 12
+  d: 4
+
+val:
+  every: 10  # run validation every x epochs
+
+  sampler: 'magnet'
+  loss: 'magnet'
+
+  L: 128
+  style: 'magnet'
+
+
+test:  # will only do one epoch
+  split: 'test'
+
+  resume_from: 'B'
+
+  sampler: 'magnet'
+  loss: 'magnet'
+
+
+
+vis:
+  every: 1  # update tensorboard every x steps (episodes)
+  plot_embed_every: 10  # update tensorboard projector every x steps (episodes) (Train and Val)
+  test_plot_embed_every: 10  # update tensorboard projector every x steps (episodes) (Test)
