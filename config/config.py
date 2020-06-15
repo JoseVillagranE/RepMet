@@ -11,7 +11,7 @@ root_dir = Path(__file__).parent.parent
 
 # Project Setup
 config = edict()
-config.project = 'pytorch.repmet'
+config.project = '/home/josev/Documents/RepMet/RepMet' # put root of working directory
 config.seed = 7
 config.gpus = '0'
 

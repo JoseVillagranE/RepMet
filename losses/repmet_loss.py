@@ -7,7 +7,7 @@ from utils.functions import make_one_hot, euclidean_distance, cosine_distance
 
 class RepmetLoss(nn.Module):
 
-    def __init__(self, reps, N, k, emb_size, alpha=1.0, sigma=0.5, dist='euc'):
+    def __init__(self, N, k, emb_size, alpha=1.0, sigma=0.5, dist='euc'):
         super(RepmetLoss, self).__init__()
         self.N = N
         self.k = k
@@ -18,7 +18,7 @@ class RepmetLoss(nn.Module):
 
         # TODO mod this from hardcoded with the device
 #        self.reps = nn.Parameter(F.normalize(torch.randn(N*k, emb_size, dtype=torch.float).cuda()))
-        self.reps = reps
+        self.reps = nn.Parameter(F.normalize(torch.randn(N*k, emb_size, dtype=torch.float)).cuda())
     def forward(self, input, target):
         """
         Equation (4) of repmet paper
@@ -28,7 +28,7 @@ class RepmetLoss(nn.Module):
         :param alpha:
         :return:
         """
-        
+
         input = input.cuda()
         target = target.cuda()
         # batch size
@@ -39,8 +39,8 @@ class RepmetLoss(nn.Module):
         # distances = euclidean_dist(input, F.normalize(self.reps))  # todo normalize the reps before dist? default no
         if self.dist == 'cos':
             distances = cosine_distance(input, self.reps)
-        else:            
-            distances = euclidean_distance(input, self.reps.module)
+        else:
+            distances = euclidean_distance(input, self.reps)
 
 
         # make mask with ones where correct class, zeros otherwise
@@ -51,13 +51,13 @@ class RepmetLoss(nn.Module):
         valmax, argmax = distances.max(-1)
         valmax, argmax = valmax.max(-1)
         valmax += 10
-        
-        
+
+
         cor = distances + (valmax*mask_inc.float())
         inc = distances + (mask_cor.float()*valmax)
         min_cor, _ = cor.min(1)
         min_inc, _ = inc.min(1)
-        
+
         # Eqn. 4 of repmet paper
         losses = F.relu(min_cor - min_inc + self.alpha)
 
@@ -117,9 +117,9 @@ if __name__ == "__main__":
 #         [[0.001, 0.001], [1, 1], [1, 1]],
 #         [[0.001, 0.002], [1, 1], [1, 1]],
 #         [[.6, 1], [.6, 1], [.5, 0.001]]]
-    
+
     d = [[1, 0.0],
-         [0.001, 0.001], 
+         [0.001, 0.001],
          [0.001, 1],
          [0.001, 0.002],
          [.6, 1]]

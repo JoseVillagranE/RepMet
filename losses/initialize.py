@@ -1,7 +1,7 @@
 from losses import PrototypicalLoss, MagnetLoss, MagnetLossEval, RepmetLoss, DetectionLoss#, CrossEntropyLoss
 
 
-def initialize_loss(config, loss_name, reps, split='train', n_classes=None):
+def initialize_loss(config, loss_name, split='train', n_classes=None):
     # losses must return loss, sample_losses, pred, acc
     if loss_name == 'prototypical':
         if split == 'train':
@@ -26,10 +26,10 @@ def initialize_loss(config, loss_name, reps, split='train', n_classes=None):
     elif loss_name == 'repmet_c':
         assert n_classes is not None
         if split == 'train':
-            return RepmetLoss(reps, N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
+            return RepmetLoss(N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
                               alpha=config.train.alpha, sigma=config.train.sigma, dist=config.model.dist)
         elif split == 'val':
-            return RepmetLoss(reps, N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
+            return RepmetLoss(N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
                               alpha=config.val.alpha, sigma=config.val.sigma, dist=config.model.dist)
         elif split == 'test':
             return RepmetLoss(reps, N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
@@ -52,4 +52,3 @@ def initialize_loss(config, loss_name, reps, split='train', n_classes=None):
         # TODO implemento
         raise NotImplementedError
         # return CrossEntropyLoss(softmaxed=False)
-

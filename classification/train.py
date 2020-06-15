@@ -74,9 +74,9 @@ def train():
     # Load model params
 
     # Use the GPU and Parallel it
-    model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
-    
-    
+    #model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
+
+
     model.cuda()
     cudnn.benchmark = True
 
@@ -117,34 +117,32 @@ def train():
         dataloaders['val'] = torch.utils.data.DataLoader(datasets['val'], batch_sampler=samplers['val'])
 
     #################### LOSSES + METRICS ######################
-    
+
     # Setup Representatives
     N = datasets['train'].n_categories
     k = config.train.k
     emb_size=config.model.emb_size
-    reps = nn.Parameter(F.normalize(torch.randn(N*k, emb_size, dtype=torch.float))
-    reps = nn.DataParallel(reps, device_ids=range(torch.cuda.device_count()))
-    reps = reps.cuda()
-    
+    #reps = nn.Parameter(F.normalize(torch.randn(N*k, emb_size, dtype=torch.float)))
+
+    #reps = nn.DataParallel(reps, device_ids=range(torch.cuda.device_count()))
+    #reps = reps.cuda()
     # Setup losses
     losses = dict()
     losses['train'] = initialize_loss(config=config,
                                       loss_name=config.train.loss,
-                                      reps=reps,
                                       split='train',
                                       n_classes=datasets['train'].n_categories)
     if config.val.every > 0:
         losses['val'] = initialize_loss(config=config,
                                         loss_name=config.val.loss,
-                                        reps=reps,
                                         split='val',
                                         n_classes=datasets['val'].n_categories)
 
     # Setup Optimizer
 #    optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
 #                                 lr=config.train.learning_rate)
-    
-    optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(reps.parameters())),
+
+    optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
                                  lr=config.train.learning_rate)
     if config.run_type == 'protonets':  # TODO consider putting in a callback on epoch_end, but then need to pass lr_sch
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,

@@ -1,10 +1,10 @@
 setup.py
-D:/MaterialU/13_semestre/InvestigaciónYoloSpoc/repmet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/vision.cpp
-D:/MaterialU/13_semestre/InvestigaciónYoloSpoc/repmet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cpu/ROIAlign_cpu.cpp
-D:/MaterialU/13_semestre/InvestigaciónYoloSpoc/repmet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cpu/nms_cpu.cpp
-D:/MaterialU/13_semestre/InvestigaciónYoloSpoc/repmet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/ROIAlign_cuda.cu
-D:/MaterialU/13_semestre/InvestigaciónYoloSpoc/repmet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/ROIPool_cuda.cu
-D:/MaterialU/13_semestre/InvestigaciónYoloSpoc/repmet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/nms.cu
+/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/vision.cpp
+/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cpu/ROIAlign_cpu.cpp
+/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cpu/nms_cpu.cpp
+/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/ROIAlign_cuda.cu
+/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/ROIPool_cuda.cu
+/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/nms.cu
 faster_rcnn.egg-info/PKG-INFO
 faster_rcnn.egg-info/SOURCES.txt
 faster_rcnn.egg-info/dependency_links.txt

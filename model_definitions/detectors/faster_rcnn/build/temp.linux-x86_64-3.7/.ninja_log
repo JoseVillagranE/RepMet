@@ -1,0 +1,7 @@
+# ninja log v5
+2	28419	1592196398136254485	/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/build/temp.linux-x86_64-3.7/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cpu/ROIAlign_cpu.o	c3c37e4cd5edccb
+1	32620	1592196402331771149	/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/build/temp.linux-x86_64-3.7/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cpu/nms_cpu.o	d6b3d65a2887eec
+3	33190	1592196402907705436	/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/build/temp.linux-x86_64-3.7/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/nms.o	2ac8a55765d967ed
+2	33308	1592196403023692209	/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/build/temp.linux-x86_64-3.7/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/ROIAlign_cuda.o	6bbb1f72dade96c5
+4	33400	1592196403119681302	/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/build/temp.linux-x86_64-3.7/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/cuda/ROIPool_cuda.o	ddebda93c2b7d966
+0	35981	1592196405699389354	/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/build/temp.linux-x86_64-3.7/home/josev/Documents/RepMet/RepMet/model_definitions/detectors/faster_rcnn/roi_layers/c_src/vision.o	abf06df85485556e
