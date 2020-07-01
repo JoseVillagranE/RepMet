@@ -76,8 +76,8 @@ class LaSOTDataset(Dataset):
 
         # load the data samples for this split
         # categories(e.x bicycle) and labels (ex. bicycle_1, bicycle_2 ...)
-        self.data, self.labels, self.categories, self.gt = self.load_data_split(categories_subset=categories_subset)
-        self.samples = list(zip(self.data, self.categories, self.labels, self.gt))
+        self.data, self.labels, self.categories, self.img_filenames, self.gt = self.load_data_split(subcategories=target_obj)
+        self.samples = list(zip(self.data, self.labels, self.categories, self.img_filenames, self.gt))
 
         self.n_videos = len(np.unique(self.labels))
 
@@ -86,12 +86,13 @@ class LaSOTDataset(Dataset):
 
     def __getitem__(self, index):
         # get the data sample
-        sample_data, sample_target, sample_categorie, sample_gt = self.samples[index]
-
+        sample_data, sample_target, sample_categorie, sample_img_filename, sample_gt = self.samples[index]
+        
+        sample_gt = [int(i) for i in sample_gt]
         box = (sample_gt[0], sample_gt[1], sample_gt[0]+sample_gt[2], sample_gt[1]+sample_gt[3])
 
         # load the image
-        x = self.load_img(join(join(self.root_dir, sample_categorie, sample_target, "img"), "%s" % sample_data),
+        x = self.load_img(join(join(self.root_dir, sample_categorie, sample_target, "img"), "%s" % sample_img_filename),
                           crop=self.crop, tuple_crop=box)
         
         y = sample_categorie # Cuidado. Lo más posible es que deba modificar
@@ -152,28 +153,28 @@ class LaSOTDataset(Dataset):
         categories = []
         labels = []
         gt = []
+        img_filenames = []
         path = join(self.root_dir)
+        
         for f_obj in listdir(path):
             if subcategories:
-                categories.append(f_obj)
                 if f_obj in subcategories:
                     for f in listdir(join(path, f_obj)):
-                        labels.append(f)
                         # Read GT
-                        f = open(os.path.join(path, f_obj, f,'groundtruth.txt'), 'r')
-                        data = f.readlines()
+                        file = open(os.path.join(path, f_obj, f,'groundtruth.txt'), 'r')
+                        data = file.readlines()
                         reader = csv.reader(data)
                         for idx, row in enumerate(reader):
                             gt.append(row)
                         # Read Image
                         for img in listdir(join(path, f_obj, f, "img")): 
                             data.append(join(path, f_obj, f, "img", img))
-                        
+                            labels.append(f)
+                            categories.append(f_obj)
+                            img_filenames.append(img)
+                            
             else:
-                categories.append(f_obj)
-                for f in listdir(join(path, f_obj)):
-                    labels.append(f)
-                    
+                for f in listdir(join(path, f_obj)):                 
                     # Read GT
                     f = open(os.path.join(path, f_obj, f,'groundtruth.txt'), 'r')
                     data = f.readlines()
@@ -183,8 +184,11 @@ class LaSOTDataset(Dataset):
                     
                     for img in listdir(join(path, f_obj, f, "img")):
                         data.append(join(path, f_obj, f, "img", img))
+                        labels.append(f)
+                        categories.append(f_obj)
+                        img_filenames.append(img)
 
-        return data, labels, categories, gt
+        return data, labels, categories, img_filenames, gt
 
     @staticmethod
     def load_img(path, crop=False, tuple_crop=None, rot=False, angle=0):
@@ -214,7 +218,7 @@ class LaSOTDataset(Dataset):
         # calculate the number of samples per category
         counts = {}
         for index in range(len(self.samples)):
-            sample_data, sample_target = self.samples[index]
+            sample_data, sample_target, sample_categorie, sample_img_filename, sample_gt = self.samples[index]
             if sample_target not in counts:
                 counts[sample_target] = 1
             else:
