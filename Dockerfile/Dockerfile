@@ -35,7 +35,7 @@ RUN conda create -y --name pytorch-py37 python=3.7.4 numpy pyyaml scipy ipython 
 RUN conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 RUN conda install -y mpi4py opencv
 RUN pip install pandas hashfs pydevd remote_pdb rpdb matplotlib visdom
-RUN pip install sacred GitPython pymongo tinydb tinydb-serialization tensorflow==1.3.0 pptree progressbar2 ipdb namedlist pyyaml cython
+RUN pip install sacred GitPython pymongo tinydb tinydb-serialization tensorflow==1.15.3 pptree progressbar2 ipdb namedlist pyyaml cython
 
 RUN pip install tensorboardX
 
