@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y apt-transport-https --no-install-recomm
          ca-certificates \
          libjpeg-dev \
          libpng-dev \
-	       libcudnn7_$CUDNN_VERSION-1+cuda10.0 \
-	       libcudnn7-dev_$CUDNN_VERSION-1+cuda10.0 && \
+	       libcudnn7=$CUDNN_VERSION-1+cuda10.0 \
+	       libcudnn7-dev=$CUDNN_VERSION-1+cuda10.0 && \
          rm -rf /var/lib/apt/lists/*
 
 
