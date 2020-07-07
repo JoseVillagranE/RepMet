@@ -11,7 +11,7 @@ root_dir = Path(__file__).parent.parent
 
 # Project Setup
 config = edict()
-config.project = '/home/josev/Documents/RepMet/RepMet' # put root of working directory
+config.project = str(root_dir.resolve())
 config.seed = 7
 config.gpus = '0'
 
@@ -157,8 +157,8 @@ config.val.style = 'magnet'  # or 'closest'
 # repmet
 config.val.m = ''
 config.val.d = ''
-config.val.alpha = ''
-config.val.sigma = ''
+config.val.alpha = 1 # default
+config.val.sigma = 0.5 # default
 
 
 # Visualisation Defaults

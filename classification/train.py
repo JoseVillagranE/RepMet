@@ -74,7 +74,7 @@ def train():
     # Load model params
 
     # Use the GPU and Parallel it
-    #model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
+    # model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
 
 
     model.cuda()
@@ -122,10 +122,6 @@ def train():
     N = datasets['train'].n_categories
     k = config.train.k
     emb_size=config.model.emb_size
-    #reps = nn.Parameter(F.normalize(torch.randn(N*k, emb_size, dtype=torch.float)))
-
-    #reps = nn.DataParallel(reps, device_ids=range(torch.cuda.device_count()))
-    #reps = reps.cuda()
     # Setup losses
     losses = dict()
     losses['train'] = initialize_loss(config=config,

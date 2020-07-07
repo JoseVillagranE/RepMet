@@ -7,7 +7,7 @@ model:
   id: '02'
   use_pretrained: True
 
-  emb_size: 64
+  emb_size: 1024
 
 
 dataset:
@@ -25,7 +25,7 @@ train:
   learning_rate: 0.001
 
   episodes: 10  # per epoch
-  k: 1
+  k: 3
   m: 12
   d: 4
 
@@ -36,6 +36,8 @@ val:
   loss: 'repmet_c'
 
   episodes: 1
+  m: 12
+  d: 4
 
   L: 128
   style: 'magnet'
