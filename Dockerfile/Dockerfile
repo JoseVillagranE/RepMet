@@ -12,14 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
          cmake \
          git \
          curl \
-	 wget \	
-	 nano \
+	       wget \
+	       nano \
          ca-certificates \
          libjpeg-dev \
-         libpng-dev 
-	 libcudnn6=$CUDNN_VERSION-1+cuda10.0 
-	 libcudnn6-dev=$CUDNN_VERSION-1+cuda10.0 && \
-     rm -rf /var/lib/apt/lists/*
+         libpng-dev \
+	       libcudnn6=$CUDNN_VERSION-1+cuda10.0 \
+	       libcudnn6-dev=$CUDNN_VERSION-1+cuda10.0 && \
+         rm -rf /var/lib/apt/lists/*
 
 
 RUN curl -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
@@ -33,7 +33,7 @@ RUN curl -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest
 RUN conda create -y --name pytorch-py37 python=3.7.4 numpy pyyaml scipy ipython mkl pillow
 RUN conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 RUN conda install -y mpi4py opencv
-RUN pip install pandas hashfs pydevd remote_pdb rpdb matplotlib visdom 
+RUN pip install pandas hashfs pydevd remote_pdb rpdb matplotlib visdom
 RUN pip install sacred GitPython pymongo tinydb tinydb-serialization tensorflow==1.3.0 pptree progressbar2 ipdb namedlist pyyaml cython
 
 RUN pip install tensorboardX
