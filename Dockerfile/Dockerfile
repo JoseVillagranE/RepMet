@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.0-cudnn7.4-devel-ubuntu20.04
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 ARG PYTHON_VERSION=3.7
 
 # CUDA includes
