@@ -7,7 +7,7 @@ ENV CUDA_INCLUDE_PATH /usr/local/cuda/include
 ENV CUDA_LIBRARY_PATH /usr/local/cuda/lib64
 ENV CUDNN_VERSION 7.6.5.32
 
-RUN apt-get update && apt-get install -y apt-transport-https --no-install-recommends \
+RUN apt-get update && apt-get install -y apt-transport-https --no-install-recommends --allow-downgrades --allow-change-held-packages \
          build-essential \
          cmake \
          git \
