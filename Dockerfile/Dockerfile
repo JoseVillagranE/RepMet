@@ -5,7 +5,7 @@ ARG PYTHON_VERSION=3.7
 ENV CUDA_PATH /usr/local/cuda
 ENV CUDA_INCLUDE_PATH /usr/local/cuda/include
 ENV CUDA_LIBRARY_PATH /usr/local/cuda/lib64
-ENV CUDNN_VERSION 7.6.5
+ENV CUDNN_VERSION 7.6.5.32
 
 RUN apt-get update && apt-get install -y apt-transport-https --no-install-recommends \
          build-essential \
