@@ -5,7 +5,7 @@ ARG PYTHON_VERSION=3.7
 ENV CUDA_PATH /usr/local/cuda
 ENV CUDA_INCLUDE_PATH /usr/local/cuda/include
 ENV CUDA_LIBRARY_PATH /usr/local/cuda/lib64
-ENV CUDNN_VERSION 7
+ENV CUDNN_VERSION 7.6.5
 
 RUN apt-get update && apt-get install -y apt-transport-https --no-install-recommends \
          build-essential \
@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y apt-transport-https --no-install-recomm
          ca-certificates \
          libjpeg-dev \
          libpng-dev \
-	       libcudnn7=$CUDNN_VERSION-1+cuda10.0 \
-	       libcudnn7-dev=$CUDNN_VERSION-1+cuda10.0 && \
+	       libcudnn7_$CUDNN_VERSION-1+cuda10.0 \
+	       libcudnn7-dev_$CUDNN_VERSION-1+cuda10.0 && \
          rm -rf /var/lib/apt/lists/*
 
 
