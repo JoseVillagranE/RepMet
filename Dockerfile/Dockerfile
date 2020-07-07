@@ -30,6 +30,7 @@ RUN curl -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest
      /opt/conda/bin/conda install -y -c pytorch magma-cuda100 && \
      /opt/conda/bin/conda clean -ya
 
+ENV PATH /opt/conda/bin:$PATH
 RUN conda create -y --name pytorch-py37 python=3.7.4 numpy pyyaml scipy ipython mkl pillow
 RUN conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 RUN conda install -y mpi4py opencv
