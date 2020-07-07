@@ -1,10 +1,10 @@
 run_type: 'repmet'
-run_id: 'stanford_dogs_1_12_4'
+run_id: 'stanford_dogs_3_12_4'
 seed: 7
 
 model:
   type: 'resnet'
-  id: '02'
+  id: '03'
   use_pretrained: True
 
   emb_size: 1024
