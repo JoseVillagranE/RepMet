@@ -3,7 +3,7 @@ run_id: 'stanford_dogs_3_12_4'
 seed: 7
 
 model:
-  type: 'resnet'
+  type: 'inception'
   id: '03'
   use_pretrained: True
 
@@ -19,9 +19,9 @@ train:
   sampler: 'episodes_repmet'
   loss: 'repmet_c'
 
-  checkpoint_every: 50  # this many epochs
+  checkpoint_every: 100  # this many epochs
 
-  epochs: 1000
+  epochs: 4200
   learning_rate: 0.001
 
   episodes: 10  # per epoch
@@ -30,7 +30,7 @@ train:
   d: 4
 
 val:
-  every: 10  # run validation every x epochs
+  every: 100  # run validation every x epochs
 
   sampler: 'episodes_repmet'
   loss: 'repmet_c'
