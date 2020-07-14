@@ -2,7 +2,7 @@
 
 GPU=$1 
 shift
-DIR=/project 
+DIR=/project/RepMet/models/resnet/03 
 
 echo GPU = $GPU
 echo Container Directory: $DIR

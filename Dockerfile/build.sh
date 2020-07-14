@@ -1,2 +1,2 @@
 #!/bin/bash
-nvidia-docker build -f Dockerfile -t repmet .
+nvidia-docker build -f Dockerfile/Dockerfile -t repmet .
