@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 ARG PYTHON_VERSION=3.7
 
 # CUDA includes
@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y apt-transport-https --no-install-recomm
          ca-certificates \
          libjpeg-dev \
          libpng-dev \
-	       libcudnn7=$CUDNN_VERSION-1+cuda10.0 \
-	       libcudnn7-dev=$CUDNN_VERSION-1+cuda10.0 && \
+	       libcudnn7=$CUDNN_VERSION-1+cuda10.1 \
+	       libcudnn7-dev=$CUDNN_VERSION-1+cuda10.1 && \
          rm -rf /var/lib/apt/lists/*
 
 
@@ -32,20 +32,23 @@ RUN curl -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest
 
 ENV PATH /opt/conda/bin:$PATH
 RUN conda create -y --name pytorch-py37 python=3.7.4 numpy pyyaml scipy ipython mkl pillow
-RUN conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
+RUN conda install pytorch==1.5.0 torchvision cudatoolkit=10.1 -c pytorch
 RUN conda install -y mpi4py opencv
+RUN pip install torchvision==0.6.0
 RUN pip install easydict
 RUN pip install pandas hashfs pydevd remote_pdb rpdb matplotlib visdom
 RUN pip install sacred GitPython pymongo tinydb tinydb-serialization tensorflow==1.15.3 pptree progressbar2 ipdb namedlist pyyaml cython
 
 RUN pip install tensorboardX
+RUN pip install sklearn
 
+RUN useradd -d /Repmet -u 12567 --create-home user
+COPY . /Repmet/
 
-RUN useradd -d /project -u 12567 --create-home user
-USER user
-WORKDIR /project/
-ADD . /project/
+#USER user
+WORKDIR /Repmet
+#ADD . /project/
 
-ENV PYTHONPATH "$PYTHONPATH:/project/RepMet"
+ENV PYTHONPATH "$PYTHONPATH:/Repmet/"
 
 ENTRYPOINT ["/opt/conda/bin/python"]

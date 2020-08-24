@@ -4,7 +4,7 @@ seed: 7
 
 model:
   type: 'inception'
-  id: '03'
+  id: '01'
   use_pretrained: True
 
   emb_size: 1024
@@ -19,7 +19,7 @@ train:
   sampler: 'episodes_repmet'
   loss: 'repmet_c'
 
-  checkpoint_every: 100  # this many epochs
+  checkpoint_every: 1000  # this many epochs
 
   epochs: 4200
   learning_rate: 0.001
