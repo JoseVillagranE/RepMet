@@ -44,17 +44,19 @@ class RepmetLoss(nn.Module):
 
 
         # make mask with ones where correct class, zeros otherwise
-        mask = make_one_hot(target, n_classes=self.N).cuda()
-        mask_cor = mask.transpose(0, 1).repeat(1, self.k).view(-1, self.n_samples).transpose(0, 1)
-        mask_inc = ~mask_cor
-
+        mask, mask_inc_ = make_one_hot(target, n_classes=self.N)
+        mask = mask.cuda()
+        mask_inc_ = mask_inc_.cuda()
+       	mask_cor = mask.transpose(0, 1).repeat(1, self.k).view(-1, self.n_samples).transpose(0, 1)
+        #mask_inc = ~mask_cor
+        mask_inc = mask_inc_.transpose(0,1).repeat(1, self.k).view(-1, self.n_samples).transpose(0,1)
         valmax, argmax = distances.max(-1)
         valmax, argmax = valmax.max(-1)
         valmax += 10
 
 
-        cor = distances + (valmax*mask_inc.float())
-        inc = distances + (mask_cor.float()*valmax)
+        cor = distances + mask_inc.float()*valmax
+        inc = distances + mask_cor.float()*valmax
         min_cor, _ = cor.min(1)
         min_inc, _ = inc.min(1)
 
@@ -65,7 +67,7 @@ class RepmetLoss(nn.Module):
         total_loss = torch.mean(losses)
 
         # Eqn. 1 of repmet paper
-        probs = torch.exp(- distances / (2 * self.sigma ** 2))  # todo is the dist meant to be squared?
+        probs = torch.exp(- (distances**2) / (2 * self.sigma ** 2))  # todo is the dist meant to be squared?
 
         # Eqn 2. of repmet paper
         hard_probs, _ = probs.view(-1, self.N, self.k).max(2)

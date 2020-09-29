@@ -19,6 +19,8 @@ config.gpus = '0'
 config.run_type = None
 config.run_id = None
 
+# Update callbacks
+config.callbacks = False
 
 config.emb_dim = 256
 
@@ -59,6 +61,10 @@ config.dataset.classes = ''
 config.dataset.use_flipped = True
 config.dataset.use_difficult = False
 
+# resume_from
+
+config.resume_from = []
+
 # Train Defaults
 config.train = edict()
 config.train.sampler = None
@@ -66,7 +72,7 @@ config.train.loss = None
 
 config.train.checkpoint_every = 0  # 0 is never
 
-config.train.for_bs = 256  # the batch size for forward pass for building clusters (magnet) or reps (repmet), lower if running out of mem
+config.train.for_bs = 32  # the batch size for forward pass for building clusters (magnet) or reps (repmet), lower if running out of mem
 
 config.train.epochs = None
 
@@ -100,7 +106,7 @@ config.train.max_size = 1000  # Max pixel size of the longest side of a scaled i
 
 
 config.train.img_per_batch = 1  # Images to use per minibatch
-config.train.batch_size = 128  # Minibatch size (number of regions of interest [ROIs])
+config.train.batch_size = 256  # Minibatch size (number of regions of interest [ROIs])
 
 config.train.use_all_gt = True  # For COCO, setting USE_ALL_GT to False will exclude boxes that are flagged as ''iscrowd''
 
@@ -147,6 +153,7 @@ config.val.loss = None
 
 config.val.episodes = ''
 
+config.val.batch_size = 256
 # protos
 config.val.categories_per_epi = ''
 config.val.support_per_epi = ''

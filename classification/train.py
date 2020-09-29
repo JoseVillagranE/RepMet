@@ -32,6 +32,10 @@ from callbacks.initialize import initialize_callbacks
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+print("Device: ", device)
+print("Current device: ", torch.cuda.current_device())
+print("Device Name: ", torch.cuda.get_device_name())
+print("Device Count: ", torch.cuda.device_count())
 print("PyTorch Version: ",torch.__version__)
 #print("Torchvision Version: ",torchvision.__version__)
 
@@ -58,7 +62,7 @@ def train():
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     assert os.path.exists(save_path), '{} does not exist'.format(save_path)
-
+    print(save_path)
     # Setup the logger
     logger = initialize_logger(save_path=save_path, run_id=config.run_id)
     pprint.pprint(config)
@@ -76,8 +80,6 @@ def train():
     # Use the GPU and Parallel it
     # model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
 
-
-    model.cuda()
     cudnn.benchmark = True
 
     #################### DATA ########################
@@ -112,9 +114,9 @@ def train():
                                              split='val')
 
     dataloaders = dict()
-    dataloaders['train'] = torch.utils.data.DataLoader(datasets['train'], batch_sampler=samplers['train'])
+    dataloaders['train'] = torch.utils.data.DataLoader(datasets['train'], batch_sampler=samplers['train'], num_workers=0)
     if config.val.every > 0:
-        dataloaders['val'] = torch.utils.data.DataLoader(datasets['val'], batch_sampler=samplers['val'])
+        dataloaders['val'] = torch.utils.data.DataLoader(datasets['val'], batch_sampler=samplers['val'], num_workers=0)
 
     #################### LOSSES + METRICS ######################
 
@@ -149,13 +151,14 @@ def train():
 
     ################### CALLBACKS #####################
     # Setup Callbacks
+
     callbacks = initialize_callbacks(config=config,
-                                     model=model,
-                                     datasets=datasets,
-                                     samplers=samplers,
-                                     dataloaders=dataloaders,
-                                     losses=losses,
-                                     optimizer=optimizer)
+                                             model=model,
+                                             datasets=datasets,
+                                             samplers=samplers,
+                                             dataloaders=dataloaders,
+                                             losses=losses,
+                                             optimizer=optimizer)
 
     # pre fit() flag
     if config.model.type == 'inception':
@@ -171,7 +174,8 @@ def train():
         optimizer=optimizer,
         callbacks=callbacks,
         lr_scheduler=lr_scheduler,
-        is_inception=is_inception)
+        is_inception=is_inception,
+        resume_from=config.resume_from)
 
 
 def fit(config,
@@ -203,11 +207,9 @@ def fit(config,
 
     if hasattr(losses['train'], 'reps') and reps is not None:
         losses['train'].set_reps(reps)
-
-    for callback in callbacks['training_start']:
-        callback(0, 0, 0, model, dataloaders, losses, optimizer,
-                 data={},
-                 stats={})
+#    if config.callbacks:
+#    	for callback in callbacks['training_start']:
+#        	callback(0, 0, 0, model, dataloaders, losses, optimizer, data={}, stats={})
 
     step = start_epoch*len(dataloaders['train'])
     for epoch in range(start_epoch, config.train.epochs):
@@ -215,11 +217,11 @@ def fit(config,
         logger.info('Epoch {}/{}'.format(epoch, config.train.epochs - 1))
         print('-' * 10)
         logger.info('-' * 10)
-
-        for callback in callbacks['epoch_start']:
-            callback(epoch, 0, step, model, dataloaders, losses, optimizer,
-                     data={},
-                     stats={})
+#	if config.callbacks:
+#            for callback in callbacks['epoch_start']:
+#            	callback(epoch, 0, step, model, dataloaders, losses, optimizer,
+#                data={},
+#                stats={})
 
         # Iterate over data.
         model.train()
@@ -252,12 +254,12 @@ def fit(config,
             # statistics
             train_loss.append(loss.item())
             train_acc.append(acc.item())
-
-            for callback in callbacks['batch_end']:
-                callback(epoch, batch, step, model, dataloaders, losses, optimizer,
-                         data={'inputs': inputs, 'outputs': outputs, 'labels': labels},
-                         stats={'Training_Loss': train_loss[-1], 'Training_Acc': train_acc[-1],
-                                'sample_losses': sample_losses})
+#	    if config.callbacks:
+#            	for callback in callbacks['batch_end']:
+#                	callback(epoch, batch, step, model, dataloaders, losses, optimizer,
+#                         data={'inputs': inputs, 'outputs': outputs, 'labels': labels},
+#                         stats={'Training_Loss': train_loss[-1], 'Training_Acc': train_acc[-1],
+#                                'sample_losses': sample_losses})
 
             batch += 1
             step += 1
@@ -272,11 +274,11 @@ def fit(config,
 
         # Validation?
         if config.val.every > 0 and (epoch+1) % config.val.every == 0:
-
-            for callback in callbacks['validation_start']:
-                callback(epoch, 0, step, model, dataloaders, losses, optimizer,
-                         data={},
-                         stats={})
+#	    if config.callbacks:
+#            	for callback in callbacks['validation_start']:
+#                	callback(epoch, 0, step, model, dataloaders, losses, optimizer,
+#                         data={},
+#                         stats={})
 
             model.eval()
             v_batch = 0
@@ -289,16 +291,20 @@ def fit(config,
                 with torch.set_grad_enabled(False):  # disables grad calculation as dont need it so can save mem
                 # Get model outputs and calculate loss
                     v_outputs = model(v_inputs)
+                
+                # Update val's reps
+                reps = losses['train'].get_reps()
+                losses['val'].set_reps(reps) 
                 loss, sample_losses, pred, acc = losses['val'](input=v_outputs, target=v_labels)
 
                 # statistics
                 val_loss.append(loss.item())
                 val_acc.append(acc.item())
-
-                for callback in callbacks['validation_batch_end']:
-                    callback(epoch, batch, step, model, dataloaders, losses, optimizer,  # todo should we make this v_batch?
-                             data={'inputs': v_inputs, 'outputs': v_outputs, 'labels': v_labels},
-                             stats={'Validation_Loss': val_loss[-1], 'Validation_Acc': val_acc[-1]})
+#		if config.callbacks:
+ #                   for callback in callbacks['validation_batch_end']:
+ #                   		callback(epoch, batch, step, model, dataloaders, losses, optimizer,  # todo should we make this v_batch?
+ #                            	data={'inputs': v_inputs, 'outputs': v_outputs, 'labels': v_labels},
+ #                            	stats={'Validation_Loss': val_loss[-1], 'Validation_Acc': val_acc[-1]})
 
                 v_batch += 1
 
@@ -319,17 +325,18 @@ def fit(config,
                     reps = None
                 save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
 
-            # End of validation callbacks
-            for callback in callbacks['validation_end']:
-                callback(epoch, batch, step, model, dataloaders, losses, optimizer,
-                         data={'inputs': v_inputs, 'outputs': v_outputs, 'labels': v_labels},
-                         stats={'Avg_Validation_Loss': avg_v_loss, 'Avg_Validation_Acc': avg_v_acc})
+#	    if config.callbacks:
+	        # End of validation callbacks
+#	        for callback in callbacks['validation_end']:
+#	            callback(epoch, batch, step, model, dataloaders, losses, optimizer,
+#	                         data={'inputs': v_inputs, 'outputs': v_outputs, 'labels': v_labels},
+#	                         stats={'Avg_Validation_Loss': avg_v_loss, 'Avg_Validation_Acc': avg_v_acc})
 
-        # End of epoch callbacks
-        for callback in callbacks['epoch_end']:
-            callback(epoch, batch, step, model, dataloaders, losses, optimizer,
-                     data={'inputs': inputs, 'outputs': outputs, 'labels': labels},
-                     stats={'Avg_Training_Loss': avg_loss, 'Avg_Training_Acc': avg_acc})
+	        # End of epoch callbacks
+#	        for callback in callbacks['epoch_end']:
+#	            callback(epoch, batch, step, model, dataloaders, losses, optimizer,
+#	                     data={'inputs': inputs, 'outputs': outputs, 'labels': labels},
+#	                     stats={'Avg_Training_Loss': avg_loss, 'Avg_Training_Acc': avg_acc})
 
         # Checkpoint?
         if config.train.checkpoint_every > 0 and epoch % config.train.checkpoint_every == 0:
@@ -347,10 +354,11 @@ def fit(config,
     print('Best val Acc: {:4f}'.format(best_acc))
     logger.info('Best val Acc: {:4f}'.format(best_acc))
 
-    for callback in callbacks['training_end']:
-        callback(epoch, batch, step, model, dataloaders, losses, optimizer,
-                 data={},
-                 stats={})
+#    if config.callbacks:
+#    	for callback in callbacks['training_end']:
+#        	callback(epoch, batch, step, model, dataloaders, losses, optimizer,
+#                 data={},
+#                 stats={})
 
     # If no validation we save the last model as best
     if config.val.every < 1:

@@ -33,7 +33,10 @@ def make_one_hot(labels, n_classes):
     :return: a one hot vector with these class labels
     """
     one_hot = torch.zeros((labels.shape[-1], n_classes))
-    return one_hot.scatter_(1, torch.unsqueeze(labels, 1).long().cpu(), 1).byte()
+    zero_hot = torch.ones((labels.shape[-1], n_classes))
+    one_hot_res = one_hot.scatter_(1, torch.unsqueeze(labels, 1).long().cpu(), 1).byte()
+    zero_hot_res = zero_hot.scatter_(1, torch.unsqueeze(labels, 1).long().cpu(), 0).byte()
+    return one_hot_res, zero_hot_res
 
 
 def euclidean_distance(x, y):

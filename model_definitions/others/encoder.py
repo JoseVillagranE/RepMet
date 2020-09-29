@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size, softmax_final=False, norm_final=True):
+    def __init__(self, input_size, hidden_sizes, output_size, softmax_final=False, norm_final=True, drop_p=0.3):
         super(Encoder, self).__init__()
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
@@ -15,6 +15,7 @@ class Encoder(nn.Module):
         self.softmax_final = softmax_final
         self.norm_final = norm_final
         self.hidden_layers = nn.ModuleList([])
+        self.dropout = nn.Dropout(drop_p)
         assert self.num_layers >= 1
         for l in range(self.num_layers):
             if l == 0:
@@ -40,6 +41,7 @@ class Encoder(nn.Module):
                     x = F.normalize(x)
             else:
                 x = F.relu(x)
+        x = self.dropout(x)
         return x
 
     def extra_repr(self):
