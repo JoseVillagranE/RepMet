@@ -30,7 +30,7 @@ train:
   d: 4
 
 val:
-  every: 100  # run validation every x epochs
+  every: 1  # run validation every x epochs
 
   sampler: 'episodes_repmet'
   loss: 'repmet_c'
@@ -45,11 +45,16 @@ val:
 
 test:  # will only do one epoch
   split: 'test'
+  every: 1
 
   resume_from: 'B'
 
   sampler: 'episodes_repmet'
   loss: 'repmet_c'
+
+  episodes: 1
+  m: 10
+  d: 4
 
 
 

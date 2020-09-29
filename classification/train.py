@@ -113,10 +113,28 @@ def train():
                                              dataset=datasets['val'],
                                              split='val')
 
+    if config.test.every > 0:
+        datasets['test'] = initialize_dataset(config=config,
+                                              dataset_name=config.dataset.name,
+                                              dataset_id=config.dataset.id,
+                                              split='train', # for more images
+                                              input_size=input_size,
+                                              mean=mean,
+                                              std=std)
+
+    if config.test.every > 0:
+        samplers['test'] = initialize_sampler(config=config,
+                                              sampler_name=config.test.sampler,
+                                              dataset=datasets['test'],
+                                              split='test')
+
     dataloaders = dict()
     dataloaders['train'] = torch.utils.data.DataLoader(datasets['train'], batch_sampler=samplers['train'], num_workers=0)
     if config.val.every > 0:
         dataloaders['val'] = torch.utils.data.DataLoader(datasets['val'], batch_sampler=samplers['val'], num_workers=0)
+
+    if config.test.every > 0:
+        dataloaders['test'] = torch.utils.data.DataLoader(datasets['test'], batch_sampler=samplers['test'], num_workers=0)
 
     #################### LOSSES + METRICS ######################
 
@@ -135,6 +153,12 @@ def train():
                                         loss_name=config.val.loss,
                                         split='val',
                                         n_classes=datasets['val'].n_categories)
+
+    if config.test.every > 0:
+        losses['test'] = initialize_loss(config=config,
+                                        loss_name=config.test.loss,
+                                        split="test",
+                                        n_classes=datasets["test"].n_categories)
 
     # Setup Optimizer
 #    optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
@@ -291,10 +315,10 @@ def fit(config,
                 with torch.set_grad_enabled(False):  # disables grad calculation as dont need it so can save mem
                 # Get model outputs and calculate loss
                     v_outputs = model(v_inputs)
-                
+
                 # Update val's reps
                 reps = losses['train'].get_reps()
-                losses['val'].set_reps(reps) 
+                losses['val'].set_reps(reps)
                 loss, sample_losses, pred, acc = losses['val'](input=v_outputs, target=v_labels)
 
                 # statistics
@@ -331,6 +355,37 @@ def fit(config,
 #	            callback(epoch, batch, step, model, dataloaders, losses, optimizer,
 #	                         data={'inputs': v_inputs, 'outputs': v_outputs, 'labels': v_labels},
 #	                         stats={'Avg_Validation_Loss': avg_v_loss, 'Avg_Validation_Acc': avg_v_acc})
+
+        # Testing?
+        if config.test.every > 0 and (epoch+1) % config.test.every == 0:
+
+            model.eval()
+            t_batch = 0
+            test_loss = []
+            test_acc = []
+            for t_inputs, t_labels in dataloaders['test']:
+                t_inputs = t_inputs.to(config.device)
+                t_labels = t_labels.to(config.device)
+
+                with torch.set_grad_enabled(False):
+                    t_outputs = model(t_inputs)
+
+                if t_batch == 0:
+                    losses['test'].set_reps(t_outputs.detach().cpu())
+                else:
+                    loss, sample_losses, pred, acc = losses['test'](input=t_outputs, target=t_labels)
+
+                # statistics
+                test_loss.append(loss.item())
+                test_acc.append(acc.item())
+                t_batch += 1
+
+            avg_t_loss = np.mean(test_loss)
+            avg_t_acc = np.mean(test_acc)
+
+            print('Avg Test Loss: {:.4f} Acc: {:.4f}'.format(avg_t_loss, avg_t_acc))
+            logger.info('Avg Test Loss: {:.4f} Acc: {:.4f}'.format(avg_t_loss, avg_t_acc))
+
 
 	        # End of epoch callbacks
 #	        for callback in callbacks['epoch_end']:

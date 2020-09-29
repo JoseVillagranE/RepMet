@@ -51,11 +51,18 @@ def initialize_dataset(config, dataset_name, dataset_id, split, input_size, mean
                                        trns.ToTensor(),
                                        trns.Normalize(mean=mean, std=std)  # normalise with model zoo
                                        ])
-
+            if split == 'train':
+                categories_subset = config.dataset.classes_train
+            elif split == "val":
+                categories_subset = config.dataset.classes_val
+            elif split == "test":
+                categories_subset = config.dataset.classes_test
+            else:
+                categories_subset = None
             return StanfordDogsDataset(root_dir=config.dataset.root_dir,
                                        split=split,
                                        transform=transforms,
-                                       categories_subset=config.dataset.classes)
+                                       categories_subset=categories_subset)
 
     elif dataset_name == 'mnist':
         if dataset_id == '00':
@@ -244,4 +251,3 @@ def initialize_sampler(config, sampler_name, dataset, split):
             raise ValueError("Split '%s' not recognised for the %s sampler." % (split, sampler_name))
     else:
         raise ValueError("Sampler '%s' not recognised." % sampler_name)
-

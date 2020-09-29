@@ -6,6 +6,7 @@ import numpy as np
 from easydict import EasyDict as edict
 from pathlib import Path
 import os
+import torch
 
 root_dir = Path(__file__).parent.parent
 
@@ -14,6 +15,7 @@ config = edict()
 config.project = str(root_dir.resolve())
 config.seed = 7
 config.gpus = '0'
+config.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Shared Defaults
 config.run_type = None
@@ -55,7 +57,9 @@ config.dataset = edict()
 config.dataset.root_dir = os.path.join(root_dir, 'data')
 config.dataset.name = None
 config.dataset.id = None
-config.dataset.classes = ''
+config.dataset.classes_train = [i for i in range(110)]
+config.dataset.classes_val = [j for j in range(110)] # Same classes but different instances
+config.dataset.classes_test = [k for k in range(110, 120)] # Different classes
 
 # detection
 config.dataset.use_flipped = True
@@ -180,7 +184,7 @@ config.vis.test_plot_embed_every = 0  # 0 is never
 config.test = edict()
 
 config.test.split = 'test'
-
+config.test.every = 0 # Never
 config.test.resume_from = 'B'  # B is best, L is latest, or define own path
 
 config.test.sampler = None
