@@ -117,7 +117,7 @@ def train():
         datasets['test'] = initialize_dataset(config=config,
                                               dataset_name=config.dataset.name,
                                               dataset_id=config.dataset.id,
-                                              split='train', # for more images
+                                              split='test',
                                               input_size=input_size,
                                               mean=mean,
                                               std=std)
@@ -305,6 +305,9 @@ def fit(config,
 #                         stats={})
 
             model.eval()
+            # Update val's reps
+            reps = losses['train'].get_reps()
+            losses['val'].set_reps(reps)
             v_batch = 0
             val_loss = []
             val_acc = []
@@ -315,10 +318,6 @@ def fit(config,
                 with torch.set_grad_enabled(False):  # disables grad calculation as dont need it so can save mem
                 # Get model outputs and calculate loss
                     v_outputs = model(v_inputs)
-
-                # Update val's reps
-                reps = losses['train'].get_reps()
-                losses['val'].set_reps(reps)
                 loss, sample_losses, pred, acc = losses['val'](input=v_outputs, target=v_labels)
 
                 # statistics
@@ -366,7 +365,6 @@ def fit(config,
             for t_inputs, t_labels in dataloaders['test']:
                 t_inputs = t_inputs.to(config.device)
                 t_labels = t_labels.to(config.device)
-
                 with torch.set_grad_enabled(False):
                     t_outputs = model(t_inputs)
 
@@ -375,9 +373,9 @@ def fit(config,
                 else:
                     loss, sample_losses, pred, acc = losses['test'](input=t_outputs, target=t_labels)
 
-                # statistics
-                test_loss.append(loss.item())
-                test_acc.append(acc.item())
+                    # statistics
+                    test_loss.append(loss.item())
+                    test_acc.append(acc.item())
                 t_batch += 1
 
             avg_t_loss = np.mean(test_loss)

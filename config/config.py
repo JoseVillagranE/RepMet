@@ -7,6 +7,11 @@ from easydict import EasyDict as edict
 from pathlib import Path
 import os
 import torch
+import random
+
+test_set_idx  = random.sample(range(120), 10)
+train_set_idx = [i for i in range(120) if i not in test_set_idx]
+
 
 root_dir = Path(__file__).parent.parent
 
@@ -57,9 +62,9 @@ config.dataset = edict()
 config.dataset.root_dir = os.path.join(root_dir, 'data')
 config.dataset.name = None
 config.dataset.id = None
-config.dataset.classes_train = [i for i in range(110)]
-config.dataset.classes_val = [j for j in range(110)] # Same classes but different instances
-config.dataset.classes_test = [k for k in range(110, 120)] # Different classes
+config.dataset.classes_train = train_set_idx
+config.dataset.classes_val = train_set_idx # Same classes but different instances
+config.dataset.classes_test = test_set_idx # Different classes
 
 # detection
 config.dataset.use_flipped = True
@@ -199,8 +204,8 @@ config.test.query_per_epi = ''
 # repmet
 config.test.m = ''
 config.test.d = ''
-config.test.alpha = ''
-config.test.sigma = ''
+config.test.alpha = 1.0
+config.test.sigma = 0.5
 
 config.test.rpn = edict()
 config.test.rpn.pre_nms_top_n = 6000

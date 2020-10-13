@@ -54,7 +54,6 @@ class RepmetLoss(nn.Module):
         valmax, argmax = valmax.max(-1)
         valmax += 10
 
-
         cor = distances + mask_inc.float()*valmax
         inc = distances + mask_cor.float()*valmax
         min_cor, _ = cor.min(1)

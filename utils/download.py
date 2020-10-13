@@ -2,6 +2,7 @@
 import os
 import requests
 from tqdm import tqdm
+from google_drive_downloader import GoogleDriveDownloader as gdd
 
 
 def download(url, path=None, overwrite=False):
@@ -58,8 +59,7 @@ def download(url, path=None, overwrite=False):
 
 # https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
 def DownloadGDrive(id, destination):
-    
-    URL = "https://docs.google.com/uc?export=download"
+    URL = "https://drive.google.com/uc?export=download"
 
     session = requests.Session()
 
@@ -71,7 +71,7 @@ def DownloadGDrive(id, destination):
         response = session.get(URL, params = params, stream = True)
 
     save_response_content(response, destination)
-    
+
 def get_confirm_token(response):
     for key, value in response.cookies.items():
         if key.startswith('download_warning'):
@@ -86,3 +86,11 @@ def save_response_content(response, destination):
         for chunk in response.iter_content(CHUNK_SIZE):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
+
+
+def newDownloadGDrive(id, destination):
+
+    gdd.download_file_from_google_drive(file_id=id,
+                                    dest_path=destination,
+                                    unzip=False,
+                                    showsize=True)

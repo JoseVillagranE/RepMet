@@ -10,7 +10,7 @@ import torch
 
 class EpisodeBatchSampler(object):
 
-    def __init__(self, labels, categories_per_epi, num_samples, episodes):
+    def __init__(self, labels, categories_per_epi, num_samples, episodes, perm=True):
         """
         :param labels: iterable containing all the labels for the current dataset (non-uniqued)
         :param categories_per_epi: number of random categories for each episode
@@ -25,6 +25,7 @@ class EpisodeBatchSampler(object):
         self.categories_per_epi = categories_per_epi
         self.sample_per_class = num_samples
         self.episodes = episodes
+        self.perm = perm
 
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
         self.classes = torch.LongTensor(self.classes)
@@ -54,14 +55,19 @@ class EpisodeBatchSampler(object):
         for it in range(self.episodes):
             batch_size = spc * cpi
             batch = torch.LongTensor(batch_size)
-            c_idxs = torch.randperm(len(self.classes))[:cpi]
+            if self.perm:
+                c_idxs = torch.randperm(len(self.classes))[:cpi]
+            else:
+                c_idxs = torch.arange(len(self.classes))[:cpi]
             for i, c in enumerate(self.classes[c_idxs]):
                 s = slice(i * spc, (i + 1) * spc)
                 # FIXME when torch.argwhere will exists
                 label_idx = torch.arange(len(self.classes)).long()[self.classes == c].item()
                 sample_idxs = torch.randperm(self.numel_per_class[label_idx])[:spc]
                 batch[s] = self.indexes[label_idx][sample_idxs]
-            batch = batch[torch.randperm(len(batch))]
+
+            if self.perm:
+                batch = batch[torch.randperm(len(batch))]
             yield batch
 
     def __len__(self):

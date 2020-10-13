@@ -221,7 +221,8 @@ def initialize_sampler(config, sampler_name, dataset, split):
             return EpisodeBatchSampler(labels=dataset.labels,
                                        categories_per_epi=config.test.m,
                                        num_samples=config.test.d,
-                                       episodes=config.test.episodes)
+                                       episodes=config.test.episodes,
+                                       perm=False)
         else:
             raise ValueError("Split '%s' not recognised for the %s sampler." % (split, sampler_name))
     if sampler_name == 'magnet':
