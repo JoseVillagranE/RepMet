@@ -9,6 +9,7 @@ from data_loading.sets.stanford_dogs import StanfordDogsDataset
 from data_loading.sets.pascal_voc import PascalVOCDataset
 from data_loading.sets.combined import CombinedDataset
 from data_loading.detection_wrapper import DetectionWrapper
+from data_loading.sets.LaSOT import LaSOTDataset
 
 def initialize_dataset(config, dataset_name, dataset_id, split, input_size, mean, std):
 
@@ -63,6 +64,25 @@ def initialize_dataset(config, dataset_name, dataset_id, split, input_size, mean
                                        split=split,
                                        transform=transforms,
                                        categories_subset=categories_subset)
+
+    elif dataset_name == "lasot":
+
+        if dataset_id == '00':  # default
+            # Setup Transforms instead of doing in the specific dataset class
+            transforms = trns.Compose([trns.Resize((input_size, input_size)),
+                                       trns.ToTensor(),
+                                       trns.Normalize(mean=mean, std=std)  # normalise with model zoo
+                                       ])
+
+            return LaSOTDataset(root_dir=config.dataset.root_dir,
+                                       split=split,
+                                       crop=True,
+                                       rate_sample=config.dataset.rate_sample,
+                                       drive=True,
+                                       transform=transforms,
+                                       categories_subset=config.dataset.lasot_categories,
+                                       _sequential_videos=config.dataset._sequential_videos)
+
 
     elif dataset_name == 'mnist':
         if dataset_id == '00':
@@ -222,7 +242,7 @@ def initialize_sampler(config, sampler_name, dataset, split):
                                        categories_per_epi=config.test.m,
                                        num_samples=config.test.d,
                                        episodes=config.test.episodes,
-                                       perm=False)
+                                       perm=True)
         else:
             raise ValueError("Split '%s' not recognised for the %s sampler." % (split, sampler_name))
     if sampler_name == 'magnet':

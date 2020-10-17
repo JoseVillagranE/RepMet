@@ -65,6 +65,9 @@ config.dataset.id = None
 config.dataset.classes_train = train_set_idx
 config.dataset.classes_val = train_set_idx # Same classes but different instances
 config.dataset.classes_test = test_set_idx # Different classes
+config.dataset.lasot_categories = ["airplane", "coin", "cup", "rubicCube", "sheep"]
+config.dataset.rate_sample = 30 # 30 fps
+config.dataset._sequential_videos = True # Lasot
 
 # detection
 config.dataset.use_flipped = True

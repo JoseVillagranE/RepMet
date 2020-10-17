@@ -1,5 +1,6 @@
 """Download files with progress bar."""
 import os
+from sys import stdout
 import requests
 from tqdm import tqdm
 from google_drive_downloader import GoogleDriveDownloader as gdd
@@ -58,7 +59,7 @@ def download(url, path=None, overwrite=False):
     return fname
 
 # https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
-def DownloadGDrive(id, destination):
+def DownloadGDrive(id, destination, obj_name=""):
     URL = "https://drive.google.com/uc?export=download"
 
     session = requests.Session()
@@ -70,7 +71,7 @@ def DownloadGDrive(id, destination):
         params = { 'id' : id, 'confirm' : token }
         response = session.get(URL, params = params, stream = True)
 
-    save_response_content(response, destination)
+    save_response_content(response, destination, obj_name=obj_name)
 
 def get_confirm_token(response):
     for key, value in response.cookies.items():
@@ -79,14 +80,25 @@ def get_confirm_token(response):
 
     return None
 
-def save_response_content(response, destination):
+def save_response_content(response, destination, obj_name=""):
     CHUNK_SIZE = 32768
-
+    current_size = 0
     with open(destination, "wb") as f:
         for chunk in response.iter_content(CHUNK_SIZE):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
+                print("\r" + obj_name + " : " + sizeof_fmt(current_size), end=' ')
+                stdout.flush()
+                current_size += CHUNK_SIZE
 
+    print()# newline
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+        if abs(num) < 1024.0:
+            return '{:.1f} {}{}'.format(num, unit, suffix)
+        num /= 1024.0
+    return '{:.1f} {}{}'.format(num, 'Yi', suffix)
 
 def newDownloadGDrive(id, destination):
 

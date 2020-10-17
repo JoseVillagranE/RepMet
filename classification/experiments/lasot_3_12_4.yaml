@@ -1,0 +1,62 @@
+run_type: 'repmet'
+run_id: 'lasot_3_12_4'
+seed: 7
+
+model:
+  type: 'inception'
+  id: '01'
+  use_pretrained: True
+
+  emb_size: 1024
+
+
+dataset:
+  name: 'lasot'
+  id: '00'
+
+train:
+  sampler: 'episodes_repmet'
+  loss: 'repmet_c'
+
+  checkpoint_every: 1000  # this many epochs
+
+  epochs: 500
+  learning_rate: 0.001
+
+  episodes: 10  # per epoch
+  k: 3 # number of Representatives
+  m: 2 # categories_per_epi
+  d: 24 # sample_per_categorie
+
+val:
+  every: 0  # run validation every x epochs
+
+  sampler: 'episodes_repmet'
+  loss: 'repmet_c'
+
+  episodes: 1
+  m: 2
+  d: 24
+  L: 128
+  style: 'magnet'
+
+
+test:  # will only do one epoch
+  split: 'test'
+  every: 1
+
+  resume_from: 'B'
+
+  sampler: 'episodes_repmet'
+  loss: 'repmet_c'
+
+  episodes: 20
+  m: 5
+  d: 3 # equal to k FIx!
+
+
+
+vis:
+  every: 1  # update tensorboard every x steps (episodes)
+  plot_embed_every: 10  # update tensorboard projector every x steps (episodes) (Train and Val)
+  test_plot_embed_every: 10  # update tensorboard projector every x steps (episodes) (Test)

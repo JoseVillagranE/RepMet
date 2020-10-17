@@ -24,6 +24,8 @@ import zipfile
 import shutil
 import csv
 import glob
+import random
+import math
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision.datasets.utils import download_url
@@ -95,14 +97,15 @@ class LaSOTDataset(Dataset):
 
     def __init__(self,
                  root_dir,
-                 target_obj,
                  split='train',
                  crop=True,
+                 rate_sample=0,
                  drive=False,
                  transform=None,
                  target_transform=None,
                  force_download=False,
-                 categories_subset=None):
+                 categories_subset=None,
+                 _sequential_videos=True):
         """
         :param root_dir: (string) the directory where the dataset will be stored
         :param split: (string) 'train', 'trainval', 'val' or 'test'
@@ -118,37 +121,42 @@ class LaSOTDataset(Dataset):
         self.root_dir = join(os.path.expanduser(root_dir), self.sub_root_dir)
         self.split = split
         self.crop = crop
+        self.rate_sample = rate_sample
         self.transform = transform
         self.target_transform = target_transform
         self.labels = []
         self.drive=drive
 
         # check if data exists, if not download
-        self.download(target_obj, force=force_download)
+        self.download(categories_subset, force=force_download)
 
         # load the data samples for this split
-        # categories(e.x bicycle) and labels (ex. bicycle_1, bicycle_2 ...)
-        self.data, self.labels, self.categories, self.img_filenames, self.gt = self.load_data_split(subcategories=target_obj)
-        self.samples = list(zip(self.data, self.labels, self.categories, self.img_filenames, self.gt))
+        # categories(e.x bicycle) and labels (ex. 0)
+        self.data, self.labels, self.categories, self.img_filenames, self.gt, \
+                self.video_label = self.load_data_split(subcategories=categories_subset, _sequential_videos=_sequential_videos)
 
-        self.n_videos = len(np.unique(self.labels))
+
+
+
+        self.samples = list(zip(self.data, self.labels, self.categories, self.img_filenames, self.gt, self.video_label))
+
+        self.n_videos = len(np.unique(self.video_label))
+        self.n_categories = len(np.unique(self.labels))
+
+        # create random angles for rotation
+        self.angles = [random.uniform(0, 360) for _ in range(len(self.data))]
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, index):
         # get the data sample
-        sample_data, sample_target, sample_categorie, sample_img_filename, sample_gt = self.samples[index]
-
-
+        sample_data, sample_target, sample_categorie, sample_img_filename, sample_gt, sample_video_label = self.samples[index]
         sample_gt = [int(i) for i in sample_gt]
         box = (sample_gt[0], sample_gt[1], sample_gt[0]+sample_gt[2], sample_gt[1]+sample_gt[3])
-
         # load the image
-        x = self.load_img(join(join(self.root_dir, sample_categorie, sample_target, "img"), "%s" % sample_img_filename),
-                          crop=self.crop, tuple_crop=box)
-
-        y = sample_categorie # Cuidado. Lo más posible es que deba modificar
+        x = self.load_img(join(join(self.root_dir, sample_categorie, sample_video_label, "img"), "%s" % sample_img_filename),
+                          crop=self.crop, tuple_crop=box, angle=self.angles[index])
 
         # perform the transforms
         if self.transform:
@@ -157,9 +165,9 @@ class LaSOTDataset(Dataset):
         if self.target_transform:
             y = self.target_transform(y)
 
-        return x, y
+        return x, sample_target, sample_categorie
 
-    def download(self, target_obj, force=False, drive=False):
+    def download(self, target_obj, force=False):
         """
 
 
@@ -190,75 +198,138 @@ class LaSOTDataset(Dataset):
             url = join(self.download_url_prefix, zip_filename)
 
             if self.drive:
-                DownloadGDrive(self.id_drive, join(self.root_dir,zip_filename))
+                DownloadGDrive(self.id_drive_subset_categories[obj], join(self.root_dir,zip_filename), obj_name=obj)
             else:
                 download_url(url, self.root_dir, zip_filename, None)
 
-            zipfile.ZipFile.extractall(join(self.root_dir, zip_filename))
+            zipfile.ZipFile(join(self.root_dir, zip_filename)).extractall(path=join(self.root_dir))
             os.remove(join(self.root_dir, zip_filename))
 
-    def load_data_split(self, subcategories=None):
+    def load_data_split(self, subcategories=None, _sequential_videos=True):
 
         assert self.split in ['train', 'test', 'rand', 'val']
+
+        videos_idxs = []
+        if _sequential_videos:
+            if self.split == "train":
+                videos_idxs = range(15)
+            elif self.split == "val":
+                videos_idxs = range(15, 18)
+            elif self.split == "test":
+                videos_idxs = range(15, 20) # I know that each categorie in Lasot have 20 videos
+        else:
+            random_list = random.sample(range(20), 20)
+            if self.split == "train":
+                videos_idxs = random_list[:15]
+            elif self.split == "val":
+                videos_idxs = random_list[15:18]
+            elif self.split == "test":
+                videos_idxs = random_list[18:]
 
         # load the samples and their labels
         data = []
         categories = []
+        video_label = []
         labels = []
         gt = []
         img_filenames = []
         path = join(self.root_dir)
-        for f_obj in listdir(path):
+        categorie_number = 0
+        for f_obj in sorted(listdir(path)):
             if subcategories:
                 if f_obj in subcategories:
-                    for video in sorted(listdir(join(path, f_obj))):
-                        # Read GT
-                        file = open(os.path.join(path, f_obj, video,'groundtruth.txt'), 'r')
-                        data_file = file.readlines()
-                        reader = csv.reader(data_file)
+                    for video_idx, video in enumerate(sorted(listdir(join(path, f_obj)))):
 
-                        file_occlusion = open(os.path.join(path, f_obj, video,'full_occlusion.txt'), 'r')
-                        data_file_occlusion = file_occlusion.readlines()
-                        reader_occlusion = list(csv.reader(data_file_occlusion))[0]
-                        for idx, row in enumerate(reader):
-                            if not int(reader_occlusion[idx]):
-                                gt.append(row)
-                        # Read Image
-                        for idx, img in enumerate(sorted(listdir(join(path, f_obj, video, "img")))):
-                            if not int(reader_occlusion[idx]):
-                                data.append(join(path, f_obj, video, "img", img))
-                                labels.append(video)
-                                categories.append(f_obj)
-                                img_filenames.append(img)
+                        if video_idx in videos_idxs:
+                            # Read GT
+                            file = open(os.path.join(path, f_obj, video,'groundtruth.txt'), 'r')
+                            data_file = file.readlines()
+                            reader = csv.reader(data_file)
+
+                            file_occlusion = open(os.path.join(path, f_obj, video,'full_occlusion.txt'), 'r')
+                            data_file_occlusion = file_occlusion.readlines()
+                            reader_occlusion = list(csv.reader(data_file_occlusion))[0]
+
+                            file_out_of_view = open(os.path.join(path, f_obj, video,'out_of_view.txt'), 'r')
+                            data_out_of_view = file_out_of_view.readlines()
+                            reader_out_of_view = list(csv.reader(data_out_of_view))[0]
+
+                            image = Image.open(join(path, f_obj, video, "img", listdir(join(path, f_obj, video, "img"))[0])) # Asume that all video have the same size
+                            w_img, h_img = image.size
+
+                            bad_gt_idx = []
+                            for idx, row in enumerate(reader):
+                                if (idx+1) % self.rate_sample == 0:
+                                    if not int(reader_occlusion[idx]) or not int(reader_out_of_view[idx]):
+                                        w, h = int(row[2]), int(row[3])
+                                        x, y = int(row[0]), int(row[1])
+                                        if (w*4 < h or h*4 < w) or  (x < w_img/8 or y < h_img/8 or x > 7*w_img/8 or y > 7*h_img/8):
+                                            bad_gt_idx.append(idx)
+                                        else:
+                                            gt.append(row)
+                            # Read Image
+                            for idx, img in enumerate(sorted(listdir(join(path, f_obj, video, "img")))):
+                                if (idx+1) % self.rate_sample == 0:
+                                    if not int(reader_occlusion[idx]) or not int(reader_out_of_view[idx]):
+                                        if idx not in bad_gt_idx:
+                                            data.append(join(path, f_obj, video, "img", img))
+                                            categories.append(f_obj)
+                                            video_label.append(video)
+                                            labels.append(categorie_number)
+                                            img_filenames.append(img)
+
+                    categorie_number += 1
 
             else:
                 for video in listdir(join(path, f_obj)): # obj folder
-                    # Read GT
-                    f = open(os.path.join(path, f_obj, video,'groundtruth.txt'), 'r')
-                    data_file = f.readlines()
-                    reader = csv.reader(data_file)
-                    for idx, row in enumerate(reader):
-                        gt.append(row)
+                    if video_idx in videos_idxs:
+                        # Read GT
+                        f = open(os.path.join(path, f_obj, video,'groundtruth.txt'), 'r')
+                        data_file = f.readlines()
+                        reader = csv.reader(data_file)
+                        for idx, row in enumerate(reader):
+                            gt.append(row)
 
-                    for img in sorted(listdir(join(path, f_obj, f, video, "img"))):
-                        data.append(join(path, f_obj, f, video, "img", img))
-                        labels.append(video)
-                        categories.append(f_obj)
-                        img_filenames.append(img)
+                        for img in sorted(listdir(join(path, f_obj, f, video, "img"))):
+                            data.append(join(path, f_obj, f, video, "img", img))
+                            categories.append(f_obj)
+                            video_label.append(video)
+                            labels.append(categorie_number)
+                            img_filenames.append(img)
+                categorie_number += 1
 
-        return data, labels, categories, img_filenames, gt
+        return data, labels, categories, img_filenames, gt, video_label
 
     @staticmethod
-    def load_img(path, crop=False, tuple_crop=None, rot=False, angle=0):
+    def load_img(path, crop=False, tuple_crop=None, angle=0):
 
         # todo either turn image to tensor in transform or do here
         # Load the image
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         image = Image.open(path).convert('RGB')
+        w_img, h_img = image.size
         if crop:
+            if angle > 0:
+                # special crop
+                w = tuple_crop[2] - tuple_crop[0]
+                h = tuple_crop[3] - tuple_crop[1]
+                x_center = int(tuple_crop[0] + w/2)
+                y_center = int(tuple_crop[1] + h/2)
+                r = math.sqrt((w/2)**2 + (h/2)**2)
+                r /= math.sqrt(2)
+                if (x_center - 1.5*r > 0 or y_center - 1.5*r > 0 or x_center + 1.5*r < w_img or y_center + 1.5*r < h_img) and \
+                            (3*w/4 > r or 3*h/4 > r):
+                    tuple_crop = (x_center - 1.5*r, y_center - 1.5*r, x_center + 1.5*r, y_center + 1.5*r)
+                else:
+                    angle = 0 # no rotation
             image = image.crop(tuple_crop)
-        if rot:
+        if angle > 0:
             image = image.rotate(angle) # angle in degree
+            # we need to adjust the image
+            w, h = image.size
+            x_center, y_center = int(w/2), int(h/2)
+            crop = (x_center - r, y_center - r, x_center + r, y_center + r)
+            image = image.crop(crop)
         return image
 
     def stats(self):
@@ -272,7 +343,7 @@ class LaSOTDataset(Dataset):
         # calculate the number of samples per category
         counts = {}
         for index in range(len(self.samples)):
-            sample_data, sample_target, sample_categorie, sample_img_filename, sample_gt = self.samples[index]
+            sample_data, sample_target, sample_categorie, sample_img_filename, sample_gt, _ = self.samples[index]
             if sample_target not in counts:
                 counts[sample_target] = 1
             else:
@@ -286,25 +357,23 @@ if __name__ == "__main__":
 
     set_working_dir()
 
-    target_obj = ["coin"]
+    target_obj = ["airplane"]
     # load the dataset
-    dataset = LaSOTDataset(root_dir=config.dataset.root_dir, target_obj=target_obj, drive=True, split='train')
+    # Lasot -> 30fps
+    dataset = LaSOTDataset(root_dir=config.dataset.root_dir, rate_sample=30, categories_subset=target_obj, drive=True, split='train')
 
     # print the stats
     print(dataset.stats())
 
     # lets plot some samples
     fig = plt.figure()
-
-    ex = dataset.__getitem__(0)
     j = 0
-    print(dataset.__len__())
-    for i in range(len(dataset)):
+    for i in range(340, len(dataset)):
         sample = dataset.__getitem__(i)
 
         ax = plt.subplot(1, 4, j + 1)
         plt.tight_layout()
-        ax.set_title('Sample %d - Class %s' % (i, sample[1]))  # convert label to categ.
+        # ax.set_title('Sample %d - Class %s - Categorie %s' % (i, sample[2], sample[1]))  # convert label to categ.
         ax.axis('off')
         plt.imshow(sample[0])  # todo when tensor will need to convert tensor to img
         j += 1

@@ -226,10 +226,10 @@ if __name__ == "__main__":
 
     # lets plot some samples
     fig = plt.figure()
-    
+
     ex = dataset.__getitem__(0)
-    
-    for i in range(len(dataset)):
+
+    for i in range(1400, len(dataset)):
         sample = dataset[i]
 
         ax = plt.subplot(1, 4, i + 1)

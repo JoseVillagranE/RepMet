@@ -93,6 +93,7 @@ def train():
                                            input_size=input_size,
                                            mean=mean,
                                            std=std)
+    print(datasets['train'].stats())
     if config.val.every > 0:
         datasets['val'] = initialize_dataset(config=config,
                                              dataset_name=config.dataset.name,
@@ -101,6 +102,8 @@ def train():
                                              input_size=input_size,
                                              mean=mean,
                                              std=std)
+
+        print(datasets['val'].stats())
 
     samplers = dict()
     samplers['train'] = initialize_sampler(config=config,
@@ -121,6 +124,7 @@ def train():
                                               input_size=input_size,
                                               mean=mean,
                                               std=std)
+        print(datasets['test'].stats())
 
     if config.test.every > 0:
         samplers['test'] = initialize_sampler(config=config,
@@ -250,7 +254,7 @@ def fit(config,
         # Iterate over data.
         model.train()
         batch = 0
-        for inputs, labels in dataloaders['train']:  # this gets a batch (or an episode)
+        for inputs, labels, _ in dataloaders['train']:  # this gets a batch (or an episode)
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -311,7 +315,7 @@ def fit(config,
             v_batch = 0
             val_loss = []
             val_acc = []
-            for v_inputs, v_labels in dataloaders['val']:
+            for v_inputs, v_labels, _ in dataloaders['val']:
                 v_inputs = v_inputs.to(device)
                 v_labels = v_labels.to(device)
 
@@ -362,7 +366,7 @@ def fit(config,
             t_batch = 0
             test_loss = []
             test_acc = []
-            for t_inputs, t_labels in dataloaders['test']:
+            for t_inputs, t_labels, _ in dataloaders['test']:
                 t_inputs = t_inputs.to(config.device)
                 t_labels = t_labels.to(config.device)
                 with torch.set_grad_enabled(False):
