@@ -136,6 +136,7 @@ class LaSOTDataset(Dataset):
                 self.video_label = self.load_data_split(subcategories=categories_subset, _sequential_videos=_sequential_videos)
 
 
+        self.video_labels = [int(video_label.split("-")[1]) for video_label in self.video_label]
 
 
         self.samples = list(zip(self.data, self.labels, self.categories, self.img_filenames, self.gt, self.video_label))
@@ -164,7 +165,6 @@ class LaSOTDataset(Dataset):
 
         if self.target_transform:
             y = self.target_transform(y)
-
         return x, sample_target, sample_categorie
 
     def download(self, target_obj, force=False):
@@ -263,7 +263,8 @@ class LaSOTDataset(Dataset):
                                     if not int(reader_occlusion[idx]) or not int(reader_out_of_view[idx]):
                                         w, h = int(row[2]), int(row[3])
                                         x, y = int(row[0]), int(row[1])
-                                        if (w*4 < h or h*4 < w) or  (x < w_img/8 or y < h_img/8 or x > 7*w_img/8 or y > 7*h_img/8):
+                                        # if the object is out of camera should be in the first five pixel in left and upper
+                                        if (w*4 < h or h*4 < w) or  (x < 5 or y < 5 or x > 15*w_img/16 or y > 15*h_img/16):
                                             bad_gt_idx.append(idx)
                                         else:
                                             gt.append(row)
@@ -357,7 +358,7 @@ if __name__ == "__main__":
 
     set_working_dir()
 
-    target_obj = ["airplane"]
+    target_obj = ["robot"]
     # load the dataset
     # Lasot -> 30fps
     dataset = LaSOTDataset(root_dir=config.dataset.root_dir, rate_sample=30, categories_subset=target_obj, drive=True, split='train')

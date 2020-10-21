@@ -242,7 +242,8 @@ def initialize_sampler(config, sampler_name, dataset, split):
                                        categories_per_epi=config.test.m,
                                        num_samples=config.test.d,
                                        episodes=config.test.episodes,
-                                       perm=True)
+                                       perm=False,
+                                       video_labels=dataset.video_labels)
         else:
             raise ValueError("Split '%s' not recognised for the %s sampler." % (split, sampler_name))
     if sampler_name == 'magnet':

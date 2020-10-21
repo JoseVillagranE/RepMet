@@ -65,7 +65,7 @@ config.dataset.id = None
 config.dataset.classes_train = train_set_idx
 config.dataset.classes_val = train_set_idx # Same classes but different instances
 config.dataset.classes_test = test_set_idx # Different classes
-config.dataset.lasot_categories = ["airplane", "coin", "cup", "rubicCube", "sheep"]
+config.dataset.lasot_categories = ["airplane", "coin", "cup", "robot", "rubicCube", "sheep"]
 config.dataset.rate_sample = 30 # 30 fps
 config.dataset._sequential_videos = True # Lasot
 
@@ -207,6 +207,8 @@ config.test.query_per_epi = ''
 # repmet
 config.test.m = ''
 config.test.d = ''
+config.test.k = config.train.k
+
 config.test.alpha = 1.0
 config.test.sigma = 0.5
 

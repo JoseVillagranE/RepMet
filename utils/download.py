@@ -3,7 +3,6 @@ import os
 from sys import stdout
 import requests
 from tqdm import tqdm
-from google_drive_downloader import GoogleDriveDownloader as gdd
 
 
 def download(url, path=None, overwrite=False):
@@ -60,7 +59,8 @@ def download(url, path=None, overwrite=False):
 
 # https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
 def DownloadGDrive(id, destination, obj_name=""):
-    URL = "https://drive.google.com/uc?export=download"
+    # URL = "https://drive.google.com/uc?export=download"
+    URL = 'https://docs.google.com/uc?export=download'
 
     session = requests.Session()
 
@@ -99,10 +99,3 @@ def sizeof_fmt(num, suffix='B'):
             return '{:.1f} {}{}'.format(num, unit, suffix)
         num /= 1024.0
     return '{:.1f} {}{}'.format(num, 'Yi', suffix)
-
-def newDownloadGDrive(id, destination):
-
-    gdd.download_file_from_google_drive(file_id=id,
-                                    dest_path=destination,
-                                    unzip=False,
-                                    showsize=True)

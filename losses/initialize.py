@@ -32,7 +32,7 @@ def initialize_loss(config, loss_name, split='train', n_classes=None):
             return RepmetLoss(N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
                               alpha=config.val.alpha, sigma=config.val.sigma, dist=config.model.dist)
         elif split == 'test':
-            return RepmetLoss(N=n_classes, k=config.train.k, emb_size=config.model.emb_size,
+            return RepmetLoss(N=n_classes, k=config.test.k, emb_size=config.model.emb_size,
                               alpha=config.test.alpha, sigma=config.test.sigma, dist=config.model.dist)
         else:
             raise ValueError("Split '%s' not recognised for the %s loss." % (split, loss_name))

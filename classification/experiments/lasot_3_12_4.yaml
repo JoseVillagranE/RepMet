@@ -20,12 +20,12 @@ train:
 
   checkpoint_every: 1000  # this many epochs
 
-  epochs: 500
+  epochs: 700
   learning_rate: 0.001
 
   episodes: 10  # per epoch
   k: 3 # number of Representatives
-  m: 2 # categories_per_epi
+  m: 6 # categories_per_epi
   d: 24 # sample_per_categorie
 
 val:
@@ -51,8 +51,9 @@ test:  # will only do one epoch
   loss: 'repmet_c'
 
   episodes: 20
-  m: 5
-  d: 3 # equal to k FIx!
+  m: 6
+  k: 5 # five videos in test
+  d: 5 # equal to k FIx!
 
 
 
