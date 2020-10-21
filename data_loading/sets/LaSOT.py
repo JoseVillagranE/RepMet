@@ -35,7 +35,7 @@ import sys
 
 from utils.debug import set_working_dir
 from config.config import config
-from utils.download import DownloadGDrive, newDownloadGDrive
+from utils.download import DownloadGDrive
 import matplotlib.pyplot as plt
 
 class LaSOTDataset(Dataset):
