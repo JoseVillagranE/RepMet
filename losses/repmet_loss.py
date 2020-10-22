@@ -104,6 +104,8 @@ class RepmetLoss(nn.Module):
             self.reps.data = torch.Tensor(reps).cuda().float()
 
 if __name__ == "__main__":
+    from sklearn.metrics import confusion_matrix
+
     print("Simple test of emb loss")
     repmet = RepmetLoss(N=3, k=2, emb_size=2)
 
@@ -134,3 +136,8 @@ if __name__ == "__main__":
     print("pred: {}".format(pred))
     print("acc: {}".format(acc))
     print('done')
+
+    label = l.detach().cpu().numpy()
+    pred = pred.detach().cpu().numpy()
+    cm = confusion_matrix(label, pred)
+    print(cm)

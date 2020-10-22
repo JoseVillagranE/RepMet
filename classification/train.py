@@ -29,6 +29,8 @@ from data_loading.initialize import initialize_dataset, initialize_sampler
 from losses.initialize import initialize_loss
 from callbacks.initialize import initialize_callbacks
 
+from sklearn.metrics import confusion_matrix
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -232,7 +234,12 @@ def fit(config,
                                                                     resume_from=resume_from,
                                                                     model=model,
                                                                     optimizer=optimizer)
-
+    target_test = None
+    pred_test = None
+    cm_test_cnt = 0
+    if config.test.every > 0:
+        target_test = np.zeros(config.test.m*config.test.d*config.test.episodes* round((config.train.epochs - start_epoch)/config.test.every))
+        pred_test = np.zeros_like(target_test)
     if hasattr(losses['train'], 'reps') and reps is not None:
         losses['train'].set_reps(reps)
 #    if config.callbacks:
@@ -380,6 +387,14 @@ def fit(config,
                     # statistics
                     test_loss.append(loss.item())
                     test_acc.append(acc.item())
+
+                    # confusion_matrix stats
+                    if pred_test is not None and t_batch > 0:
+                        target_test[cm_test_cnt*config.test.m*config.test.d:(cm_test_cnt+1)*config.test.m*config.test.d] = t_labels.detach().cpu().numpy()
+                        pred_test[cm_test_cnt*config.test.m*config.test.d:(cm_test_cnt+1)*config.test.m*config.test.d] = pred.detach().cpu().numpy()
+
+                    cm_test_cnt += 1
+
                 t_batch += 1
 
             avg_t_loss = np.mean(test_loss)
@@ -427,6 +442,10 @@ def fit(config,
         else:
             reps = None
         save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
+
+    if pred_test is not None:
+        cm = confusion_matrix(target_test, pred_test)
+        logger.info(cm)
 
     return model, best_state, best_acc, train_loss, train_acc, val_loss, val_acc
 
