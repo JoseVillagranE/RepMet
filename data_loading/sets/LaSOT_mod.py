@@ -5,10 +5,12 @@ import csv
 from os import listdir
 import numpy as np
 import random
+import zipfile
 from config.config import config
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision.datasets.utils import download_url
+from utils.download import DownloadGDrive
 
 
 
@@ -16,12 +18,12 @@ class LaSOTDataset_mod(Dataset):
 
     sub_root_dir = 'LaSOT-modified'
     id_drive_subset_categories = {
-                                    "book": "",
-                                    "bottle": "",
-                                    "coin": "",
-                                    "cup": "",
-                                    "robot": "",
-                                    "rubicCube": ""
+                                    "book": "1bGaTImz9hOwIdcljNvo_JQoVkUOIe0zi",
+                                    "bottle": "1j0oULJFkLiSiVacKKFuJbNDFEsCThphK",
+                                    "coin": "1-Iw0dyoW1ZjfM2NfErjD-0kduDPqOdKp",
+                                    "cup": "1t5J9eegIrygUG9iRlzrV98Y_fGjbL9Gp",
+                                    "robot": "1-3FJawcSETT6opcvX9_AqQKYR0t4Pule",
+                                    "rubicCube": "1YSdTO1w0aaEtLSaUcHSohUbYgApHeQao"
                                     }
 
     def __init__(self,
@@ -32,7 +34,8 @@ class LaSOTDataset_mod(Dataset):
                  crop=True,
                  transform=None,
                  rotate_image=False,
-                 force_download=False):
+                 force_download=False,
+                 objects = ["book", "bottle", "coin", "cup", "robot", "rubicCube"]):
 
         self.root_dir = os.path.join(os.path.expanduser(root_dir), self.sub_root_dir)
         self.idxs_videos = idxs_videos
@@ -42,7 +45,7 @@ class LaSOTDataset_mod(Dataset):
         self.transform = transform
 
         # check if data exists, if not download
-        self.download(force=force_download)
+        self.download(objects, force=force_download)
 
         self.data, self.gt, self.labels, self.categories = self.load_data_split(self.root_dir,
                                                                                 split,
@@ -84,7 +87,7 @@ class LaSOTDataset_mod(Dataset):
 
         # check for existence, if so return
         for obj in target_obj:
-            if os.path.exists(join(self.root_dir, obj)):
+            if os.path.exists(os.path.join(self.root_dir, obj)):
                 if not force:
                     print('File {} already downloaded and verified'.format(obj))
                     return
@@ -94,10 +97,9 @@ class LaSOTDataset_mod(Dataset):
             # make the dirs and start the downloads
             os.makedirs(self.root_dir, exist_ok=True)
             zip_filename = obj + '.zip'
-            url = join(self.download_url_prefix, zip_filename)
-            DownloadGDrive(self.id_drive_subset_categories[obj], join(self.root_dir,zip_filename), obj_name=obj)
-            zipfile.ZipFile(join(self.root_dir, zip_filename)).extractall(path=join(self.root_dir))
-            os.remove(join(self.root_dir, zip_filename))
+            DownloadGDrive(self.id_drive_subset_categories[obj], os.path.join(self.root_dir,zip_filename), obj_name=obj)
+            zipfile.ZipFile(os.path.join(self.root_dir, zip_filename)).extractall(path=os.path.join(self.root_dir))
+            os.remove(os.path.join(self.root_dir, zip_filename))
 
     def stats(self):
         # get the stats to print
@@ -128,6 +130,7 @@ class LaSOTDataset_mod(Dataset):
         gt = []
 
         label = 0
+        key = lambda x: int(os.path.split(x)[1].split('.')[0])
         if isinstance(idxs_videos[0], int):
             if split == 'train':
                 idxs_videos = [list(range(end_idx)) for end_idx in idxs_videos]
@@ -137,7 +140,9 @@ class LaSOTDataset_mod(Dataset):
         for i, object in enumerate(sorted(listdir(root_dir))):
             for idx_video in idxs_videos[i]:
                 video = object + '-' + str(idx_video+1)
-                for frame in sorted(glob.glob(os.path.join(root_dir, object, video, '*.jpg')), key=os.path.getmtime):
+                for frame in sorted(glob.glob(os.path.join(root_dir, object, video, '*.jpg')), key=key):
+                # for idx_frame in range(301):
+                #     frame = glob.glob(os.path.join(root_dir, object, video, str(idx_frame)+'.jpg'))[0]
                     data.append(frame)
                     labels.append(label)
                     categories.append(object)
@@ -189,8 +194,10 @@ if __name__ == "__main__":
     idxs_videos = [4, 1, 8, 9, 8, 5]
     split = 'test'
     crop = True
-    rotate_image = True
-    dataset = LaSOTDataset_mod(config.dataset.root_dir,
+    rotate_image = False
+    # root_dir = config.dataset.root_dir
+    root_dir = "/home/josev/Documents/dummy_lasot"
+    dataset = LaSOTDataset_mod(root_dir,
                               idxs_videos,
                               num_videos,
                               split,
@@ -201,10 +208,10 @@ if __name__ == "__main__":
     print(dataset.stats())
 
     plt.figure()
-    for i in range(16):
-        plt.subplot(4, 4, i+1)
-        idx = np.random.randint(0, dataset.__len__())
-        image = dataset.__getitem__(idx)[0]
+    for i in range(64):
+        plt.subplot(8, 8, i+1)
+        # idx = np.random.randint(0, dataset.__len__())
+        image = dataset.__getitem__(i)[0]
         plt.imshow(image)
         plt.axis('off')
     plt.show()
