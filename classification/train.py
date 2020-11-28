@@ -94,7 +94,9 @@ def train():
                                            split='train',
                                            input_size=input_size,
                                            mean=mean,
-                                           std=std)
+                                           std=std,
+                                           idxs_videos=config.dataset.idxs_videos,
+                                           num_videos=config.dataset.num_videos)
     print(datasets['train'].stats())
     if config.val.every > 0:
         datasets['val'] = initialize_dataset(config=config,
@@ -125,7 +127,9 @@ def train():
                                               split='test',
                                               input_size=input_size,
                                               mean=mean,
-                                              std=std)
+                                              std=std,
+                                              idxs_videos=config.dataset.idxs_videos,
+                                              num_videos=config.dataset.num_videos)
         print(datasets['test'].stats())
 
     if config.test.every > 0:
@@ -167,9 +171,6 @@ def train():
                                         n_classes=datasets["test"].n_categories)
 
     # Setup Optimizer
-#    optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
-#                                 lr=config.train.learning_rate)
-
     optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
                                  lr=config.train.learning_rate)
     if config.run_type == 'protonets':  # TODO consider putting in a callback on epoch_end, but then need to pass lr_sch

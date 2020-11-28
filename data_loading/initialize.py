@@ -10,8 +10,17 @@ from data_loading.sets.pascal_voc import PascalVOCDataset
 from data_loading.sets.combined import CombinedDataset
 from data_loading.detection_wrapper import DetectionWrapper
 from data_loading.sets.LaSOT import LaSOTDataset
+from data_loading.sets.LaSOT_mod import LaSOTDataset_mod
 
-def initialize_dataset(config, dataset_name, dataset_id, split, input_size, mean, std):
+def initialize_dataset(config,
+                       dataset_name,
+                       dataset_id,
+                       split,
+                       input_size,
+                       mean,
+                       std,
+                       idxs_videos=None,
+                       num_videos=None):
 
     if dataset_name == 'omniglot':
         if dataset_id == '00':  # default
@@ -75,13 +84,33 @@ def initialize_dataset(config, dataset_name, dataset_id, split, input_size, mean
                                        ])
 
             return LaSOTDataset(root_dir=config.dataset.root_dir,
-                                       split=split,
-                                       crop=True,
-                                       rate_sample=config.dataset.rate_sample,
-                                       drive=True,
-                                       transform=transforms,
-                                       categories_subset=config.dataset.lasot_categories,
-                                       _sequential_videos=config.dataset._sequential_videos)
+                               split=split,
+                               crop=True,
+                               rate_sample=config.dataset.rate_sample,
+                               drive=True,
+                               transform=transforms,
+                               categories_subset=config.dataset.lasot_categories,
+                               _sequential_videos=config.dataset._sequential_videos,
+                               range_valid=config.dataset.range_valid)
+
+    elif dataset_name == "lasot-m":
+
+        if dataset_id == '00':
+            # Setup Transforms instead of doing in the specific dataset class
+            transforms = trns.Compose([trns.Resize((input_size, input_size)),
+                                       trns.ToTensor(),
+                                       trns.Normalize(mean=mean, std=std)  # normalise with model zoo
+                                       ])
+            assert idxs_videos is not None, "You need to especify idxs_videos"
+            assert num_videos is not None, "You need to especify num_videos"
+
+            return LaSOTDataset_mod(root_dir=config.dataset.root_dir,
+                                    idxs_videos=idxs_videos,
+                                    num_videos=num_videos,
+                                    split=split,
+                                    crop=True,
+                                    transform=transforms,
+                                    rotate_image=config.datasets.rotate_image)
 
 
     elif dataset_name == 'mnist':
@@ -243,7 +272,7 @@ def initialize_sampler(config, sampler_name, dataset, split):
                                        num_samples=config.test.d,
                                        episodes=config.test.episodes,
                                        perm=False,
-                                       video_labels=dataset.video_labels)
+                                       video_labels=None)
         else:
             raise ValueError("Split '%s' not recognised for the %s sampler." % (split, sampler_name))
     if sampler_name == 'magnet':

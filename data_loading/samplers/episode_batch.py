@@ -98,6 +98,7 @@ if __name__ == "__main__":
     from utils.debug import set_working_dir
     from config.config import config
     from data_loading.sets.LaSOT import LaSOTDataset
+    from data_loading.sets.LaSOT_mod import LaSOTDataset_mod
     from torchvision import transforms as trns
 
     # set the working directory as appropriate
@@ -108,11 +109,24 @@ if __name__ == "__main__":
     transforms = trns.Compose([trns.Resize((240, 240)),
                                trns.ToTensor()])
 
-    dataset = LaSOTDataset(root_dir=config.dataset.root_dir, transform=transforms, rate_sample=30,
-                            categories_subset=target_obj, drive=True, split='test')
+    # dataset = LaSOTDataset(root_dir=config.dataset.root_dir, transform=transforms, rate_sample=30,
+    #                         categories_subset=target_obj, drive=True, split='test')
+
+    idxs_videos = [4, 1, 8, 9, 8, 5]
+    dataset = LaSOTDataset_mod(config.dataset.root_dir,
+                               idxs_videos,
+                               split='train',
+                               crop=True,
+                               transform=transforms)
+
+    print(dataset.stats())
 
     # setup the the sampler
-    sampler = EpisodeBatchSampler(labels=dataset.labels, categories_per_epi=3, num_samples=5, episodes=3, perm=False, video_labels=dataset.video_labels)
+    sampler = EpisodeBatchSampler(labels=dataset.labels,
+                                  categories_per_epi=35,
+                                  num_samples=5,
+                                  episodes=3,
+                                  perm=False)
 
     # setup the dataloader
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler)

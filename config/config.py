@@ -68,6 +68,9 @@ config.dataset.classes_test = test_set_idx # Different classes
 config.dataset.lasot_categories = ["airplane", "coin", "cup", "robot", "rubicCube", "sheep"]
 config.dataset.rate_sample = 30 # 30 fps
 config.dataset._sequential_videos = True # Lasot
+config.dataset.idxs_videos = [4, 1, 8, 9, 8, 5]
+config.dataset.num_videos = [7, 2, 12, 13, 12, 8]
+config.dataset.rotate_image = False
 
 # detection
 config.dataset.use_flipped = True
