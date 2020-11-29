@@ -110,7 +110,7 @@ def initialize_dataset(config,
                                     split=split,
                                     crop=True,
                                     transform=transforms,
-                                    rotate_image=config.datasets.rotate_image)
+                                    rotate_image=config.dataset.rotate_image)
 
 
     elif dataset_name == 'mnist':
