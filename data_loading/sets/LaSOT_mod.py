@@ -7,6 +7,7 @@ import numpy as np
 import random
 import zipfile
 from config.config import config
+import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision.datasets.utils import download_url
@@ -74,16 +75,15 @@ class LaSOTDataset_mod(Dataset):
 
         rotation_angle = 0
         if self.rotate_image:
-            original_image = torch.clone(data)
-            x = self.load_img(data, crop=self.crop, tuple_crop=box, angle=self.angles[index])
+            x, original_image = self.load_img(data, crop=self.crop, tuple_crop=box, angle=self.angles[index])
             rotation_angle = self.angles[index]
 
         else:
-            x = self.load_img(data, crop=self.crop, tuple_crop=box, angle=0)
-            original_image = torch.clone(x)
+            x, original_image = self.load_img(data, crop=self.crop, tuple_crop=box, angle=0)
 
         if self.transform:
             x = self.transform(x)
+            original_image = self.transform(original_image)
 
         return x, label, categorie, rotation_angle, original_image
 
@@ -166,6 +166,7 @@ class LaSOTDataset_mod(Dataset):
 
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         image = Image.open(path).convert('RGB')
+        original_image = image.copy()
         if crop:
             if angle > 0:
                 w_gt = tuple_crop[2] - tuple_crop[0]
@@ -183,7 +184,8 @@ class LaSOTDataset_mod(Dataset):
                 crop = (x_center - r, y_center - r, x_center + r, y_center + r)
                 tuple_crop = crop
             image = image.crop(tuple_crop)
-        return image
+            original_image = original_image.crop(tuple_crop)
+        return image, original_image
 
 
 

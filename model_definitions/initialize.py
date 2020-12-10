@@ -144,8 +144,8 @@ def initialize_model(config, model_name, model_id):
         print("Invalid model name: %s" % model_name)
         exit()
 
-
-    regressor_model = AngleRegressor(output_size, 1)
+    if config.train.angle:
+        regressor_model = AngleRegressor(config.model.emb_size, 1)
 
     return model, regressor_model, input_size, output_size, mean, std
 

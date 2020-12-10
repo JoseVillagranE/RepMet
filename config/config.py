@@ -78,7 +78,7 @@ config.dataset.use_difficult = False
 
 # resume_from
 
-config.resume_from = []
+config.resume_from = 'B'
 
 # Train Defaults
 config.train = edict()
@@ -86,12 +86,14 @@ config.train.sampler = None
 config.train.loss = None
 config.train.alpha_1 = 10
 config.train.alpha_2 = 1
+config.train.angle = True
 
 config.train.checkpoint_every = 0  # 0 is never
 
 config.train.for_bs = 32  # the batch size for forward pass for building clusters (magnet) or reps (repmet), lower if running out of mem
 
 config.train.epochs = None
+config.train.angle_epochs = 100
 
 config.train.optimizer = 'sgd'
 config.train.learning_rate = 0.001

@@ -76,7 +76,8 @@ def train():
                                                                  model_name=config.model.type,
                                                                  model_id=config.model.id)
     model = model.to(device)
-    regressor_model = regressor_model.to(device)
+    if regressor_model is not None:
+        regressor_model = regressor_model.to(device)
 
     # Load model params
 
@@ -147,6 +148,9 @@ def train():
     if config.test.every > 0:
         dataloaders['test'] = torch.utils.data.DataLoader(datasets['test'], batch_sampler=samplers['test'], num_workers=0)
 
+    if config.train.angle:
+        dataloaders['angle_train'] = torch.utils.data.DataLoader(datasets['train'], batch_size=128) # sequential read
+
     #################### LOSSES + METRICS ######################
 
     # Setup Representatives
@@ -171,14 +175,15 @@ def train():
                                         split="test",
                                         n_classes=datasets["test"].n_categories)
 
-    if config.angle_regression:
-        losses['angle'] = initialize_loss(config=config)
+    if config.train.angle:
+        losses['angle'] = initialize_loss(config=config, loss_name='angle_loss')
 
     # Setup Optimizer
     optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
                                  lr=config.train.learning_rate)
 
-    optimizer_reg_model = torch.optim.Adam(regressor_model.parameters(), lr=config.train.lr_reg)
+    if config.train.angle:
+        optimizer_reg_model = torch.optim.Adam(regressor_model.parameters(), lr=config.train.lr_reg)
     if config.run_type == 'protonets':  # TODO consider putting in a callback on epoch_end, but then need to pass lr_sch
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                    gamma=config.train.lr_scheduler_gamma,
@@ -206,9 +211,11 @@ def train():
     fit(config=config,
         logger=logger,
         model=model,
+        regressor_model=regressor_model,
         dataloaders=dataloaders,
         losses=losses,
         optimizer=optimizer,
+        optimizer_reg_model=optimizer_reg_model,
         callbacks=callbacks,
         lr_scheduler=lr_scheduler,
         is_inception=is_inception,
@@ -218,13 +225,15 @@ def train():
 def fit(config,
         logger,
         model,
+        regressor_model,
         dataloaders,
         losses,
         optimizer,
+        optimizer_reg_model,
         callbacks,
         lr_scheduler=None,
         is_inception=False,
-        resume_from='L'):
+        resume_from='B'):
 
     since = time.time()
 
@@ -254,7 +263,7 @@ def fit(config,
 #        	callback(0, 0, 0, model, dataloaders, losses, optimizer, data={}, stats={})
 
     step = start_epoch*len(dataloaders['train'])
-    for epoch in range(start_epoch, config.train.epochs):
+    for epoch in range(start_epoch+1, config.train.epochs):
         print('Epoch {}/{}'.format(epoch, config.train.epochs - 1))
         logger.info('Epoch {}/{}'.format(epoch, config.train.epochs - 1))
         print('-' * 10)
@@ -440,38 +449,60 @@ def fit(config,
 #                 stats={})
 
     # If no validation we save the last model as best
-    if config.val.every < 1:
-        best_acc = avg_acc
-        # best_state = copy.deepcopy(model.state_dict())
-        best_state = model.state_dict()
-        if hasattr(losses['train'], 'reps'):
-            reps = losses['train'].get_reps()
-        else:
-            reps = None
-        save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
+    # if config.val.every < 1:
+    #     best_acc = avg_acc
+    #     # best_state = copy.deepcopy(model.state_dict())
+    #     best_state = model.state_dict()
+    #     if hasattr(losses['train'], 'reps'):
+    #         reps = losses['train'].get_reps()
+    #     else:
+    #         reps = None
+    #     save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
 
-    if regressor_model is not None:
+    device = 'cpu'
+    model = model.to(device)
+    regressor_model = regressor_model.to(device)
+
+    if config.train.angle:
+        print("Training Angle Regression...")
         angle_losses = []
-        for inputs, labels, _ , angles, original_images in dataloaders['train']:  # this gets a batch (or an episode)
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            angles = angles.to(angles)
-            original_images = original_images.to(device)
+        for epoch in range(config.train.angle_epochs):
+            loss = 0
+            batch = 0
+            for inputs, labels, _ , angles, original_images in dataloaders['angle_train']:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                angles = angles.to(angles).float()
+                original_images = original_images.to(device)
 
-            with torch.set_grad_enabled(False):
-                embeddings = model(embeddings)
+                with torch.set_grad_enabled(False):
+                    rot_embeddings, aux_rot_embeddings = model(inputs) # may rotate
+                    ori_embeddings, aux_ori_embeddings = model(original_images)
 
-            sin_pred, cos_pred = regressor_model(original_images, inputs)
-            sin_label, cos_label = torch.sin(angles), torch.cos(angles)
 
-            angle_losses = losses['angle'](sin_pred, cos_pred, sin_label, cos_label)
-            angle_losses = angle_losses.mean()
+                # loss_main, sample_losses_main, pred, acc = losses['train'](input=outputs, target=labels)
+                # loss_aux, sample_losses_aux, pred_aux, acc_aux = losses['train'](input=aux_outputs, target=labels)
+                # loss = loss_main + 0.4 * loss_aux
+                # sample_losses = sample_losses_main + 0.4 * sample_losses_aux
 
-            optimizer_reg_model.zero_grad()
-            angle_losses.backward()
-            optimizer_reg_model.step()
+                sin_pred, cos_pred = regressor_model(ori_embeddings, rot_embeddings)
+                sin_label, cos_label = torch.sin(angles), torch.cos(angles)
 
-            angle_loss.append(angle_losses.item())
+                aux_sin_pred, aux_cos_pred = regressor_model(aux_ori_embeddings, aux_rot_embeddings)
+
+                angle_losses = losses['angle'](sin_pred, cos_pred, sin_label, cos_label)
+                aux_angle_losses = losses['angle'](aux_sin_pred, aux_cos_pred, sin_label, cos_label)
+
+                angle_losses = angle_losses + 0.4*aux_angle_losses
+                optimizer_reg_model.zero_grad()
+                angle_losses.backward()
+                optimizer_reg_model.step()
+
+                loss += angle_losses.item()
+                batch += 1
+
+            angle_loss.append(loss/batch)
+            print(f"Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
     if pred_test is not None:
         cm = confusion_matrix(target_test, pred_test)
