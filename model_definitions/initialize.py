@@ -1,6 +1,7 @@
 from torchvision import models
 
 from model_definitions.others.encoder import Encoder
+from model_definitions.others.angle_regressor import AngleRegressor
 from model_definitions.cnns.basics.protonet import ProtoNet
 from model_definitions.cnns.basics.lenet import LeNet
 from model_definitions.cnns.inceptions.googlenet import GoogLeNet
@@ -13,6 +14,7 @@ def initialize_model(config, model_name, model_id):
     output_size = 0
     mean = None
     std = None
+    regressor_model = None
 
     if model_name == "resnet":
         """ Resnet18
@@ -142,7 +144,10 @@ def initialize_model(config, model_name, model_id):
         print("Invalid model name: %s" % model_name)
         exit()
 
-    return model, input_size, output_size, mean, std
+
+    regressor_model = AngleRegressor(output_size, 1)
+
+    return model, regressor_model, input_size, output_size, mean, std
 
 
 def freeze_params(model, params=None, verbose=True):

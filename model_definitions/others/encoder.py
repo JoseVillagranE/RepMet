@@ -30,6 +30,9 @@ class Encoder(nn.Module):
 
             self.hidden_layers.append(nn.Linear(layer_input_size, layer_output_size))
 
+
+        # self.fc_ori = nn.Linear(input_size, 512)
+
     def forward(self, x):
         for l in range(self.num_layers):
             x = self.hidden_layers[l](x)
@@ -40,7 +43,9 @@ class Encoder(nn.Module):
                 elif self.norm_final:
                     x = F.normalize(x)
             else:
-                x = F.relu(x)
+                x = F.relu(F.normalize(x))
+                if l == 0:
+                    fc_ori_outp = self.fc_ori()
         x = self.dropout(x)
         return x
 
@@ -48,4 +53,3 @@ class Encoder(nn.Module):
         return '{}, {}, {}, softmax_final={}, norm_final={}'.format(
             self.input_size, self.hidden_sizes, self.output_size, self.softmax_final, self.norm_final
         )
-

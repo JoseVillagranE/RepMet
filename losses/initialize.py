@@ -1,4 +1,4 @@
-from losses import PrototypicalLoss, MagnetLoss, MagnetLossEval, RepmetLoss, DetectionLoss#, CrossEntropyLoss
+from losses import PrototypicalLoss, MagnetLoss, MagnetLossEval, RepmetLoss, DetectionLoss, AngleLoss#, CrossEntropyLoss
 
 
 def initialize_loss(config, loss_name, split='train', n_classes=None):
@@ -47,6 +47,9 @@ def initialize_loss(config, loss_name, split='train', n_classes=None):
             return DetectionLoss(config)
         else:
             raise ValueError("Split '%s' not recognised for the %s loss." % (split, loss_name))
+
+    elif loss_name == "angle_loss":
+        return AngleLoss(config)
     elif loss_name == 'ce':
         # assumes output is a softmax
         # TODO implemento

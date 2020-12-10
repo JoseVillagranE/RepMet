@@ -68,8 +68,8 @@ config.dataset.classes_test = test_set_idx # Different classes
 config.dataset.lasot_categories = ["airplane", "coin", "cup", "robot", "rubicCube", "sheep"]
 config.dataset.rate_sample = 30 # 30 fps
 config.dataset._sequential_videos = True # Lasot
-config.dataset.idxs_videos = [4, 1, 8, 9, 8, 5]
-config.dataset.num_videos = [7, 2, 12, 13, 12, 8]
+config.dataset.idxs_videos = [4, 1, 8, 9, 8, 5] # lasot-m dataset
+config.dataset.num_videos = [7, 2, 12, 13, 12, 8] # lasot-m dataset
 config.dataset.rotate_image = False
 
 # detection
@@ -84,6 +84,8 @@ config.resume_from = []
 config.train = edict()
 config.train.sampler = None
 config.train.loss = None
+config.train.alpha_1 = 10
+config.train.alpha_2 = 1
 
 config.train.checkpoint_every = 0  # 0 is never
 
@@ -93,6 +95,7 @@ config.train.epochs = None
 
 config.train.optimizer = 'sgd'
 config.train.learning_rate = 0.001
+config.train.lr_reg = 0.001
 config.train.lr_scheduler_gamma = ''
 config.train.lr_scheduler_step = ''
 config.train.momentum = 0.9

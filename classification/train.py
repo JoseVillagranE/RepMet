@@ -72,10 +72,11 @@ def train():
 
     #################### MODEL ########################
     # Load the model definition
-    model, input_size, output_size, mean, std = initialize_model(config=config,
+    model, regressor_model, input_size, output_size, mean, std = initialize_model(config=config,
                                                                  model_name=config.model.type,
                                                                  model_id=config.model.id)
     model = model.to(device)
+    regressor_model = regressor_model.to(device)
 
     # Load model params
 
@@ -170,9 +171,14 @@ def train():
                                         split="test",
                                         n_classes=datasets["test"].n_categories)
 
+    if config.angle_regression:
+        losses['angle'] = initialize_loss(config=config)
+
     # Setup Optimizer
     optimizer = torch.optim.Adam(params=(list(filter(lambda p: p.requires_grad, model.parameters())) + list(losses['train'].parameters())),
                                  lr=config.train.learning_rate)
+
+    optimizer_reg_model = torch.optim.Adam(regressor_model.parameters(), lr=config.train.lr_reg)
     if config.run_type == 'protonets':  # TODO consider putting in a callback on epoch_end, but then need to pass lr_sch
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                    gamma=config.train.lr_scheduler_gamma,
@@ -262,7 +268,7 @@ def fit(config,
         # Iterate over data.
         model.train()
         batch = 0
-        for inputs, labels, _ in dataloaders['train']:  # this gets a batch (or an episode)
+        for inputs, labels, _ , _, _ in dataloaders['train']:  # this gets a batch (or an episode)
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -323,7 +329,7 @@ def fit(config,
             v_batch = 0
             val_loss = []
             val_acc = []
-            for v_inputs, v_labels, _ in dataloaders['val']:
+            for v_inputs, v_labels, _, _, _ in dataloaders['val']:
                 v_inputs = v_inputs.to(device)
                 v_labels = v_labels.to(device)
 
@@ -374,7 +380,7 @@ def fit(config,
             t_batch = 0
             test_loss = []
             test_acc = []
-            for t_inputs, t_labels, _ in dataloaders['test']:
+            for t_inputs, t_labels, _, _, _ in dataloaders['test']:
                 t_inputs = t_inputs.to(config.device)
                 t_labels = t_labels.to(config.device)
                 with torch.set_grad_enabled(False):
@@ -443,6 +449,29 @@ def fit(config,
         else:
             reps = None
         save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
+
+    if regressor_model is not None:
+        angle_losses = []
+        for inputs, labels, _ , angles, original_images in dataloaders['train']:  # this gets a batch (or an episode)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            angles = angles.to(angles)
+            original_images = original_images.to(device)
+
+            with torch.set_grad_enabled(False):
+                embeddings = model(embeddings)
+
+            sin_pred, cos_pred = regressor_model(original_images, inputs)
+            sin_label, cos_label = torch.sin(angles), torch.cos(angles)
+
+            angle_losses = losses['angle'](sin_pred, cos_pred, sin_label, cos_label)
+            angle_losses = angle_losses.mean()
+
+            optimizer_reg_model.zero_grad()
+            angle_losses.backward()
+            optimizer_reg_model.step()
+
+            angle_loss.append(angle_losses.item())
 
     if pred_test is not None:
         cm = confusion_matrix(target_test, pred_test)

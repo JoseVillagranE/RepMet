@@ -72,15 +72,20 @@ class LaSOTDataset_mod(Dataset):
         sample_gt = [int(i) for i in gt]
         box = (sample_gt[0], sample_gt[1], sample_gt[0]+sample_gt[2], sample_gt[1]+sample_gt[3])
 
+        rotation_angle = 0
         if self.rotate_image:
+            original_image = torch.clone(data)
             x = self.load_img(data, crop=self.crop, tuple_crop=box, angle=self.angles[index])
+            rotation_angle = self.angles[index]
+
         else:
             x = self.load_img(data, crop=self.crop, tuple_crop=box, angle=0)
+            original_image = torch.clone(x)
 
         if self.transform:
             x = self.transform(x)
 
-        return x, label, categorie
+        return x, label, categorie, rotation_angle, original_image
 
 
     def download(self, target_obj, force=False):
