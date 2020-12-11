@@ -34,6 +34,7 @@ class LaSOTDataset_mod(Dataset):
                  split='train',
                  crop=True,
                  transform=None,
+                 angle_in_rad=True,
                  rotate_image=False,
                  force_download=False,
                  objects = ["book", "bottle", "coin", "cup", "robot", "rubicCube"]):
@@ -44,6 +45,8 @@ class LaSOTDataset_mod(Dataset):
         self.split = split
         self.crop = crop
         self.transform = transform
+        self.angle_in_rad = angle_in_rad
+        self.rotate_image = rotate_image
 
         # check if data exists, if not download
         self.download(objects, force=force_download)
@@ -56,10 +59,8 @@ class LaSOTDataset_mod(Dataset):
         assert len(self.data) == len(self.gt), f"len_data: {len(self.data)}, len_gt: {len(self.gt)}"
 
         self.samples = list(zip(self.data, self.gt, self.labels, self.categories))
-
         self.n_categories = len(np.unique(self.labels))
 
-        self.rotate_image = rotate_image
         if rotate_image:
             # create random angles for rotation
             self.angles = [random.uniform(0, 360) for _ in range(len(self.data))]
@@ -84,6 +85,9 @@ class LaSOTDataset_mod(Dataset):
         if self.transform:
             x = self.transform(x)
             original_image = self.transform(original_image)
+
+        if self.angle_in_rad:
+            rotation_angle = self.degree2rad(rotation_angle)
 
         return x, label, categorie, rotation_angle, original_image
 
@@ -187,11 +191,10 @@ class LaSOTDataset_mod(Dataset):
             original_image = original_image.crop(tuple_crop)
         return image, original_image
 
-
-
-
-
-
+    @staticmethod
+    def degree2rad(angle):
+        return np.pi*angle/180.0
+        
 if __name__ == "__main__":
 
     import matplotlib.pyplot as plt

@@ -201,6 +201,7 @@ config.test = edict()
 
 config.test.split = 'test'
 config.test.every = 0 # Never
+config.test.angle_every = 0
 config.test.resume_from = 'B'  # B is best, L is latest, or define own path
 
 config.test.sampler = None

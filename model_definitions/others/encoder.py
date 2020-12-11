@@ -44,8 +44,6 @@ class Encoder(nn.Module):
                     x = F.normalize(x)
             else:
                 x = F.relu(F.normalize(x))
-                if l == 0:
-                    fc_ori_outp = self.fc_ori()
         x = self.dropout(x)
         return x
 

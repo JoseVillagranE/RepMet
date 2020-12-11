@@ -9,9 +9,8 @@ class AngleLoss(nn.Module):
         super().__init__()
         self.alpha_1 = config.train.alpha_1
         self.alpha_2 = config.train.alpha_2
-
         self.mse = nn.MSELoss(reduction='none')
-
+        
     def forward(self, sin_pred, cos_pred, sin_label, cos_label):
 
         loss = self.alpha_1*self.mse(sin_pred, sin_label) + \

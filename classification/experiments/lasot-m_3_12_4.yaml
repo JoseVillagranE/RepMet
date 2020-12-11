@@ -45,7 +45,7 @@ val:
 test:  # will only do one epoch
   split: 'test'
   every: 25
-
+  angle_every: 25
   resume_from: 'B'
 
   sampler: 'episodes_repmet'

@@ -150,6 +150,7 @@ def train():
 
     if config.train.angle:
         dataloaders['angle_train'] = torch.utils.data.DataLoader(datasets['train'], batch_size=128) # sequential read
+        dataloaders['angle_test'] = torch.utils.data.DataLoader(datasets['test'], batch_size=128)
 
     #################### LOSSES + METRICS ######################
 
@@ -459,39 +460,34 @@ def fit(config,
     #         reps = None
     #     save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
 
-    device = 'cpu'
-    model = model.to(device)
-    regressor_model = regressor_model.to(device)
+    # device = 'cpu'
+    # model = model.to(device)
+    # regressor_model = regressor_model.to(device)
 
     if config.train.angle:
         print("Training Angle Regression...")
         angle_losses = []
+        angle_losses_test = []
         for epoch in range(config.train.angle_epochs):
             loss = 0
             batch = 0
             for inputs, labels, _ , angles, original_images in dataloaders['angle_train']:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-                angles = angles.to(angles).float()
+                angles = angles.to(device).float()
                 original_images = original_images.to(device)
 
                 with torch.set_grad_enabled(False):
                     rot_embeddings, aux_rot_embeddings = model(inputs) # may rotate
                     ori_embeddings, aux_ori_embeddings = model(original_images)
 
-
-                # loss_main, sample_losses_main, pred, acc = losses['train'](input=outputs, target=labels)
-                # loss_aux, sample_losses_aux, pred_aux, acc_aux = losses['train'](input=aux_outputs, target=labels)
-                # loss = loss_main + 0.4 * loss_aux
-                # sample_losses = sample_losses_main + 0.4 * sample_losses_aux
-
                 sin_pred, cos_pred = regressor_model(ori_embeddings, rot_embeddings)
                 sin_label, cos_label = torch.sin(angles), torch.cos(angles)
 
                 aux_sin_pred, aux_cos_pred = regressor_model(aux_ori_embeddings, aux_rot_embeddings)
 
-                angle_losses = losses['angle'](sin_pred, cos_pred, sin_label, cos_label)
-                aux_angle_losses = losses['angle'](aux_sin_pred, aux_cos_pred, sin_label, cos_label)
+                angle_losses = losses['angle'](sin_pred.squeeze(), cos_pred.squeeze(), sin_label, cos_label)
+                aux_angle_losses = losses['angle'](aux_sin_pred.squeeze(), aux_cos_pred.squeeze(), sin_label, cos_label)
 
                 angle_losses = angle_losses + 0.4*aux_angle_losses
                 optimizer_reg_model.zero_grad()
@@ -502,7 +498,35 @@ def fit(config,
                 batch += 1
 
             angle_loss.append(loss/batch)
-            print(f"Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
+            print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
+
+            if (epoch+1)/(config.test.angle_every):
+                batch = 0
+                loss = 0
+                for inputs, labels, _ , angles, original_images in dataloaders['angle_test']:
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
+                    angles = angles.to(device).float()
+                    original_images = original_images.to(device)
+
+                    with torch.set_grad_enabled(False):
+                        rot_embeddings, aux_rot_embeddings = model(inputs) # may rotate
+                        ori_embeddings, aux_ori_embeddings = model(original_images)
+
+                    sin_pred, cos_pred = regressor_model(ori_embeddings, rot_embeddings)
+                    sin_label, cos_label = torch.sin(angles), torch.cos(angles)
+
+                    aux_sin_pred, aux_cos_pred = regressor_model(aux_ori_embeddings, aux_rot_embeddings)
+
+                    angle_losses = losses['angle'](sin_pred.squeeze(), cos_pred.squeeze(), sin_label, cos_label)
+                    aux_angle_losses = losses['angle'](aux_sin_pred.squeeze(), aux_cos_pred.squeeze(), sin_label, cos_label)
+
+                    angle_losses = angle_losses + 0.4*aux_angle_losses
+                    loss += angle_losses.item()
+                    batch += 1
+
+                angle_losses_test.append(loss/batch)
+                print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
     if pred_test is not None:
         cm = confusion_matrix(target_test, pred_test)
