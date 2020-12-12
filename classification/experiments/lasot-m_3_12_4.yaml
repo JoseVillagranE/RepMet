@@ -1,6 +1,7 @@
 run_type: 'repmet'
 run_id: 'lasot-m_3_12_4'
 seed: 7
+resume_from: 'B'
 
 model:
   type: 'inception'
@@ -13,7 +14,7 @@ model:
 dataset:
   name: 'lasot-m'
   id: '00'
-  rotate_image: False
+  rotate_image: True
 
 train:
   sampler: 'episodes_repmet'
@@ -24,6 +25,7 @@ train:
   epochs: 500
   angle_epochs: 100
   learning_rate: 0.001
+  lr_reg: 0.001
 
   episodes: 10  # per epoch
   k: 3 # number of Representatives
