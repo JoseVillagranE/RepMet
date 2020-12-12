@@ -528,6 +528,9 @@ def fit(config,
                 angle_losses_test.append(loss/batch)
                 print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
+        save_path = os.path.join(config.model.root_dir, config.model.type, config.model.id, config.run_id, 'checkpoints')
+        torch.save(regressor_model.state_dict(), os.path.join(save_path, "regressor_model" + ".pth.tar"))
+
     if pred_test is not None:
         cm = confusion_matrix(target_test, pred_test)
         logger.info(cm)
