@@ -497,7 +497,7 @@ def fit(config,
                 loss += angle_losses.item()
                 batch += 1
 
-            angle_loss.append(loss/batch)
+            angle_losses.append(loss/batch)
             print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
             if (epoch+1)/(config.test.angle_every):
