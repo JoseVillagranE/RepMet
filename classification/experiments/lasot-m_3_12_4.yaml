@@ -22,6 +22,7 @@ train:
   checkpoint_every: 1000  # this many epochs
 
   epochs: 500
+  angle_epochs: 100
   learning_rate: 0.001
 
   episodes: 10  # per epoch
