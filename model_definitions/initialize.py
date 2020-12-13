@@ -145,7 +145,7 @@ def initialize_model(config, model_name, model_id):
         exit()
 
     if config.train.angle:
-        regressor_model = AngleRegressor(config.model.emb_size, 1)
+        regressor_model = AngleRegressor(config.model.emb_size)
 
     return model, regressor_model, input_size, output_size, mean, std
 

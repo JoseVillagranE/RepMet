@@ -460,14 +460,15 @@ def fit(config,
     #         reps = None
     #     save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
 
-    # device = 'cpu'
-    # model = model.to(device)
-    # regressor_model = regressor_model.to(device)
+    device = 'cpu'
+    model = model.to(device)
+    regressor_model = regressor_model.to(device)
 
     if config.train.angle:
         print("Training Angle Regression...")
-        angle_losses = []
-        angle_losses_test = []
+        angle_loss = []
+        angle_loss_test = []
+        model.eval()
         for epoch in range(config.train.angle_epochs):
             loss = 0
             batch = 0
@@ -478,18 +479,13 @@ def fit(config,
                 original_images = original_images.to(device)
 
                 with torch.set_grad_enabled(False):
-                    rot_embeddings, aux_rot_embeddings = model(inputs) # may rotate
-                    ori_embeddings, aux_ori_embeddings = model(original_images)
+                    rot_embeddings = model(inputs) # may rotate
+                    ori_embeddings = model(original_images)
 
-                sin_pred, cos_pred = regressor_model(ori_embeddings, rot_embeddings)
-                sin_label, cos_label = torch.sin(angles), torch.cos(angles)
+                k, cell_pred, theta_pred = regressor_model(ori_embeddings, rot_embeddings, angles)
 
-                aux_sin_pred, aux_cos_pred = regressor_model(aux_ori_embeddings, aux_rot_embeddings)
+                angle_losses = losses['angle'](k, cell_pred, angles, theta_pred)
 
-                angle_losses = losses['angle'](sin_pred.squeeze(), cos_pred.squeeze(), sin_label, cos_label)
-                aux_angle_losses = losses['angle'](aux_sin_pred.squeeze(), aux_cos_pred.squeeze(), sin_label, cos_label)
-
-                angle_losses = angle_losses + 0.4*aux_angle_losses
                 optimizer_reg_model.zero_grad()
                 angle_losses.backward()
                 optimizer_reg_model.step()
@@ -497,10 +493,10 @@ def fit(config,
                 loss += angle_losses.item()
                 batch += 1
 
-            angle_losses.append(loss/batch)
+            angle_loss.append(loss/batch)
             print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
-            if (epoch+1)/(config.test.angle_every):
+            if (epoch+1)%(config.test.angle_every)==0:
                 batch = 0
                 loss = 0
                 for inputs, labels, _ , angles, original_images in dataloaders['angle_test']:
@@ -510,23 +506,18 @@ def fit(config,
                     original_images = original_images.to(device)
 
                     with torch.set_grad_enabled(False):
-                        rot_embeddings, aux_rot_embeddings = model(inputs) # may rotate
-                        ori_embeddings, aux_ori_embeddings = model(original_images)
+                        rot_embeddings, _ = model(inputs) # may rotate
+                        ori_embeddings, _ = model(original_images)
 
                     sin_pred, cos_pred = regressor_model(ori_embeddings, rot_embeddings)
                     sin_label, cos_label = torch.sin(angles), torch.cos(angles)
 
-                    aux_sin_pred, aux_cos_pred = regressor_model(aux_ori_embeddings, aux_rot_embeddings)
-
                     angle_losses = losses['angle'](sin_pred.squeeze(), cos_pred.squeeze(), sin_label, cos_label)
-                    aux_angle_losses = losses['angle'](aux_sin_pred.squeeze(), aux_cos_pred.squeeze(), sin_label, cos_label)
-
-                    angle_losses = angle_losses + 0.4*aux_angle_losses
                     loss += angle_losses.item()
                     batch += 1
 
-                angle_losses_test.append(loss/batch)
-                print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
+                angle_loss_test.append(loss/batch)
+                print(f"Test Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
         save_path = os.path.join(config.model.root_dir, config.model.type, config.model.id, config.run_id, 'checkpoints')
         torch.save(regressor_model.state_dict(), os.path.join(save_path, "regressor_model" + ".pth.tar"))
