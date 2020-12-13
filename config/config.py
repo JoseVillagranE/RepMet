@@ -87,6 +87,7 @@ config.train.loss = None
 config.train.alpha_1 = 10
 config.train.alpha_2 = 1
 config.train.angle = True
+config.train.angle_batch_size = 128
 
 config.train.checkpoint_every = 0  # 0 is never
 
@@ -127,6 +128,8 @@ config.train.max_size = 1000  # Max pixel size of the longest side of a scaled i
 
 config.train.img_per_batch = 1  # Images to use per minibatch
 config.train.batch_size = 256  # Minibatch size (number of regions of interest [ROIs])
+
+
 
 config.train.use_all_gt = True  # For COCO, setting USE_ALL_GT to False will exclude boxes that are flagged as ''iscrowd''
 
@@ -203,6 +206,7 @@ config.test.split = 'test'
 config.test.every = 0 # Never
 config.test.angle_every = 0
 config.test.resume_from = 'B'  # B is best, L is latest, or define own path
+config.test.angle_batch_size = 128
 
 config.test.sampler = None
 config.test.loss = None

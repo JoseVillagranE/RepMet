@@ -149,8 +149,8 @@ def train():
         dataloaders['test'] = torch.utils.data.DataLoader(datasets['test'], batch_sampler=samplers['test'], num_workers=0)
 
     if config.train.angle:
-        dataloaders['angle_train'] = torch.utils.data.DataLoader(datasets['train'], batch_size=128) # sequential read
-        dataloaders['angle_test'] = torch.utils.data.DataLoader(datasets['test'], batch_size=128)
+        dataloaders['angle_train'] = torch.utils.data.DataLoader(datasets['train'], batch_size=config.train.angle_batch_size) # sequential read
+        dataloaders['angle_test'] = torch.utils.data.DataLoader(datasets['test'], batch_size=config.test.angle_batch_size)
 
     #################### LOSSES + METRICS ######################
 
@@ -472,6 +472,7 @@ def fit(config,
         for epoch in range(config.train.angle_epochs):
             loss = 0
             batch = 0
+            regressor_model.train()
             for inputs, labels, _ , angles, original_images in dataloaders['angle_train']:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
@@ -482,7 +483,7 @@ def fit(config,
                     rot_embeddings = model(inputs) # may rotate
                     ori_embeddings = model(original_images)
 
-                k, cell_pred, theta_pred = regressor_model(ori_embeddings, rot_embeddings, angles)
+                k, cell_pred, theta_pred = regressor_model(ori_embeddings, rot_embeddings, angles, mode='train')
 
                 angle_losses = losses['angle'](k, cell_pred, angles, theta_pred)
 
@@ -495,10 +496,12 @@ def fit(config,
 
             angle_loss.append(loss/batch)
             print(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
+            logger.info(f"Train Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
             if (epoch+1)%(config.test.angle_every)==0:
                 batch = 0
                 loss = 0
+                regressor_model.eval()
                 for inputs, labels, _ , angles, original_images in dataloaders['angle_test']:
                     inputs = inputs.to(device)
                     labels = labels.to(device)
@@ -506,18 +509,18 @@ def fit(config,
                     original_images = original_images.to(device)
 
                     with torch.set_grad_enabled(False):
-                        rot_embeddings, _ = model(inputs) # may rotate
-                        ori_embeddings, _ = model(original_images)
+                        rot_embeddings = model(inputs) # may rotate
+                        ori_embeddings = model(original_images)
 
-                    sin_pred, cos_pred = regressor_model(ori_embeddings, rot_embeddings)
-                    sin_label, cos_label = torch.sin(angles), torch.cos(angles)
+                    k, cell_pred, theta_pred = regressor_model(ori_embeddings, rot_embeddings, angles, mode='test')
 
-                    angle_losses = losses['angle'](sin_pred.squeeze(), cos_pred.squeeze(), sin_label, cos_label)
+                    angle_losses = losses['angle'](k, cell_pred, angles, theta_pred)
                     loss += angle_losses.item()
                     batch += 1
 
                 angle_loss_test.append(loss/batch)
                 print(f"Test Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
+                logger.info(f"Test Angle Loss: {loss/batch:.2f} || Epoch: {epoch}")
 
         save_path = os.path.join(config.model.root_dir, config.model.type, config.model.id, config.run_id, 'checkpoints')
         torch.save(regressor_model.state_dict(), os.path.join(save_path, "regressor_model" + ".pth.tar"))
