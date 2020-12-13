@@ -26,6 +26,7 @@ train:
   angle_epochs: 100
   learning_rate: 0.001
   lr_reg: 0.001
+  angle_batch_size: 128
 
   episodes: 10  # per epoch
   k: 3 # number of Representatives
@@ -50,6 +51,7 @@ test:  # will only do one epoch
   every: 25
   angle_every: 25
   resume_from: 'B'
+  angle_batch_size: 128
 
   sampler: 'episodes_repmet'
   loss: 'repmet_c'

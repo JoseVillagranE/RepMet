@@ -460,9 +460,9 @@ def fit(config,
     #         reps = None
     #     save_checkpoint(config, epoch, model, optimizer, best_acc, reps=reps, is_best=True)
 
-    device = 'cpu'
-    model = model.to(device)
-    regressor_model = regressor_model.to(device)
+    # device = 'cpu'
+    # model = model.to(device)
+    # regressor_model = regressor_model.to(device)
 
     if config.train.angle:
         print("Training Angle Regression...")
