@@ -18,5 +18,5 @@ class AngleLoss(nn.Module):
         # loss = self.alpha_1*self.mse(sin_pred, sin_label) + \
         #        self.alpha_1*self.mse(cos_pred, cos_label) + \
         #        self.alpha_2*(sin_pred.pow(2) + cos_pred.pow(2) - 1)
-        loss = self.cross_entropy(cell_pred, k) + self.mse(theta_pred, angle)
+        loss = self.cross_entropy(cell_pred, k)# + self.mse(theta_pred, angle)
         return loss.mean()

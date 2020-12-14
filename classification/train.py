@@ -513,7 +513,6 @@ def fit(config,
                         ori_embeddings = model(original_images)
 
                     k, cell_pred, theta_pred = regressor_model(ori_embeddings, rot_embeddings, angles, mode='test')
-
                     angle_losses = losses['angle'](k, cell_pred, angles, theta_pred)
                     loss += angle_losses.item()
                     batch += 1

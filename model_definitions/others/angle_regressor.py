@@ -17,7 +17,10 @@ class AngleRegressor(nn.Module):
         # self.cos_fc = nn.Sequential(nn.Linear(input_size*2, outp_size), nn.Tanh())
 
         num_of_outp = round(2*np.pi/angle_sample)
-        self.Fcell = nn.Sequential(nn.Linear(input_size*2, num_of_outp), nn.Softmax())
+        self.Fcell = nn.Sequential(nn.Linear(input_size*2, input_size), # input_size -> 1024
+                                   nn.Linear(input_size, 64),
+                                   nn.Linear(64, num_of_outp),
+                                   nn.Softmax())
         self.Ftheta = nn.Sequential(nn.Linear(input_size*2, num_of_outp), nn.Sigmoid())
         self.angle_sample = angle_sample
 
