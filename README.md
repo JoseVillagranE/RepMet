@@ -38,7 +38,9 @@ As a first result, the accuracy and the loss function of the classification task
 
 Second, the accuracy on the LaSOT dataset with and without rotation is shown:
 
-<img src = "https://github.com/JoseVillagranE/RepMet/blob/master/images/lasot-m_acc_1.png" height="300" width ="420" /> <img src = "https://github.com/JoseVillagranE/RepMet/blob/master/images/lasot-m_acc_2.png" height="300" width ="420" />
+<p align="center">
+    <img src = "https://github.com/JoseVillagranE/RepMet/blob/master/images/lasot-m_acc_1.png" height="300" width ="500" /> <img src = "https://github.com/JoseVillagranE/RepMet/blob/master/images/lasot-m_acc_2.png" height="300" width ="500" />
+</p>
 
 And the respective confusion matrix:
 
